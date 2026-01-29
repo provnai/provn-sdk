@@ -6,7 +6,7 @@
 //!
 //! This crate provides a lightweight, `no_std` compatible implementation for generating
 //! verifiable audit trails. It is designed to be compatible with resource-constrained
-//! environments like Solana programs and Arweave AO processes, while maintaining 
+//! environments like Solana programs and Arweave AO processes, while maintaining
 //! strict [JCS (RFC 8785)](https://rfc-editor.org/rfc/rfc8785) compliance for
 //! cross-platform interoperability.
 

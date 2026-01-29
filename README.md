@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2021-blue.svg)](https://www.rust-lang.org/)
+[![Rust CI](https://github.com/provnai/provn-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/provnai/provn-sdk/actions/workflows/ci.yml)
 
 Provncloud SDK is a lightweight cryptographic toolkit for signing and verifying data claims. It allows you to generate local audit trails—ensuring that sensitive data never leaves your environment while still providing a permanent, verifiable proof anchored to [Arweave AO](https://ao.arweave.dev) and [Solana](https://solana.com).
 
