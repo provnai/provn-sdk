@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2021-blue.svg)](https://www.rust-lang.org/)
 
-**Provncloud SDK** is a lightweight cryptographic toolkit for signing and verifying data claims. It allows you to generate local audit trails—ensuring that sensitive data never leaves your environment while still providing a permanent, verifiable proof anchored to [Arweave AO](https://ao.arweave.dev) and [Solana](https://solana.com).
+Provncloud SDK is a lightweight cryptographic toolkit for signing and verifying data claims. It allows you to generate local audit trails—ensuring that sensitive data never leaves your environment while still providing a permanent, verifiable proof anchored to [Arweave AO](https://ao.arweave.dev) and [Solana](https://solana.com).
 
 ---
 
@@ -12,11 +12,11 @@
 This SDK is the first step in a decentralized proof-of-existence pipeline:
 
 1.  **Local Signing**: You sign a data hash using your private Ed25519 key (Identity).
-2.  **API Submission**: You send the signed claim to the **Provncloud API**. The API verifies your signature but never sees your raw data.
+2.  **API Submission**: You send the signed claim to the Provncloud API. The API verifies your signature but never sees your raw data.
 3.  **L3 Batching**: Provncloud batches multiple claims into an "Industrial Receipt" for high-throughput efficiency.
 4.  **Dual Anchoring**:
-    - The full audit log is permanently stored on **Arweave AO**.
-    - A cryptographic commitment (state root) is anchored to **Solana** for high-speed finality and settlement.
+    - The full audit log is permanently stored on Arweave AO.
+    - A cryptographic commitment (state root) is anchored to Solana for high-speed finality and settlement.
 
 ---
 
@@ -37,7 +37,7 @@ Add this to your `Cargo.toml`:
 provn-sdk = { git = "https://github.com/provnai/provn-sdk.git" }
 ```
 
-For **no-std** environments (e.g., Solana programs):
+For no-std environments (e.g., Solana programs):
 ```toml
 [dependencies]
 provn-sdk = { git = "https://github.com/provnai/provn-sdk.git", default-features = false, features = ["alloc"] }
@@ -94,7 +94,7 @@ This library is a portable implementation of the `ed25519-dalek` crate, designed
 | Feature | Implementation | Complexity |
 | :--- | :--- | :--- |
 | **Cryptography** | Ed25519 (Edwards-curve Digital Signature Algorithm) | O(1) Verification |
-| **Serialization** | **JCS (RFC 8785)** Canonical JSON | Sorted Keys |
+| **Serialization** | JCS (RFC 8785) Canonical JSON | Sorted Keys |
 | **Runtime** | `no-std` + `alloc` | Solana/AO Compatible |
 | **Payload Capacity** | 2KB (Optimized for L3 Batching) | High throughput |
 

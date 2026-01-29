@@ -1,8 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//! Provn Client-Side SDK
+//! # Provncloud SDK
 //!
-//! Minimal, standalone crate for signing and verifying claims locally.
+//! A high-performance, universal cryptographic engine for signing and verifying data claims.
+//!
+//! This crate provides a lightweight, `no_std` compatible implementation for generating
+//! verifiable audit trails. It is designed to be compatible with resource-constrained
+//! environments like Solana programs and Arweave AO processes, while maintaining 
+//! strict [JCS (RFC 8785)](https://rfc-editor.org/rfc/rfc8785) compliance for
+//! cross-platform interoperability.
 
 extern crate alloc;
 
@@ -14,10 +20,14 @@ use core::fmt;
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 
+/// Errors encountered during SDK operations.
 #[derive(Debug)]
 pub enum SdkError {
+    /// Error occurred during JSON serialization or deserialization.
     SerializationError(String),
+    /// Error occurred during cryptographic signature generation or verification.
     SignatureError(String),
+    /// Error occurred due to invalid key format or length.
     KeyError(String),
 }
 

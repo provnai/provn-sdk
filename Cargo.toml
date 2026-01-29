@@ -2,8 +2,11 @@
 name = "provn-sdk"
 version = "0.1.0"
 edition = "2021"
-description = "Client-side SDK for signing and verifying Provncloud claims"
+description = "Universal, no-std Rust SDK for privacy-preserving digital signatures and data anchoring."
 license = "MIT"
+repository = "https://github.com/provnai/provn-sdk"
+keywords = ["cryptography", "ed25519", "no-std", "identity", "anchoring"]
+categories = ["cryptography", "no-std", "embedded"]
 
 [features]
 default = ["std"]
