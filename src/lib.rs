@@ -29,6 +29,8 @@ pub enum SdkError {
     SignatureError(String),
     /// Error occurred due to invalid key format or length.
     KeyError(String),
+    /// Error occurred when validation rules (like size limits) are violated.
+    ValidationError(String),
 }
 
 impl fmt::Display for SdkError {
@@ -37,6 +39,7 @@ impl fmt::Display for SdkError {
             SdkError::SerializationError(e) => write!(f, "Serialization failed: {}", e),
             SdkError::SignatureError(e) => write!(f, "Invalid signature: {}", e),
             SdkError::KeyError(e) => write!(f, "Key format error: {}", e),
+            SdkError::ValidationError(e) => write!(f, "Validation error: {}", e),
         }
     }
 }
@@ -109,6 +112,16 @@ impl Claim {
     /// Canonical serialization for signing (Sorted keys, no whitespace)
     /// This follows JCS (RFC 8785) logic by relying on struct field ordering.
     pub fn to_signable_bytes(&self) -> Result<Vec<u8>> {
+        // Validation: Enforce 2KB Limit on Metadata
+        const MAX_METADATA_SIZE: usize = 2048;
+        if let Some(ref meta) = self.metadata {
+            if meta.len() > MAX_METADATA_SIZE {
+                return Err(SdkError::ValidationError(
+                    "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.".to_string()
+                ));
+            }
+        }
+
         // Enforce canonical JSON (no whitespace, sorted keys via struct order)
         let json = serde_json::to_string(self)?;
         Ok(json.into_bytes())
@@ -236,5 +249,21 @@ mod tests {
 
         let result = verify_claim(&signed);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_metadata_limit() {
+        let mut claim = Claim::new_with_timestamp("Test Data".to_string(), 123456789);
+        // Create metadata slightly larger than 2048 bytes
+        let large_metadata = "a".repeat(2049);
+        claim.metadata = Some(large_metadata);
+
+        let result = claim.to_signable_bytes();
+        match result {
+            Err(SdkError::ValidationError(msg)) => {
+                assert_eq!(msg, "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
+            }
+            _ => panic!("Expected ValidationError for metadata > 2KB"),
+        }
     }
 }
