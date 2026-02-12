@@ -1,0 +1,74 @@
+{
+  "_warning": "⚠️  SECURITY NOTICE: These are TEST private keys for cross-SDK verification only. They are randomly generated and should NEVER be used in production!",
+  "generated_at": "2024-01-01T00:00:00Z",
+  "sdk_version": "0.2.0",
+  "spec_version": "1.0",
+  "test_vectors": [
+    {
+      "canonical_json": "{\"data\":\"test_data_123\",\"timestamp\":1704067200}",
+      "claim": {
+        "data": "test_data_123",
+        "timestamp": 1704067200
+      },
+      "description": "Basic claim with data and timestamp",
+      "expected_signature": "2c6c22892d7afaff61de2d3bf1fd774ef4e79684bbe17cf6ce380400854c2879dfa825fbf54329d784ae14b545de78da8ed7df9863fe173d61f84da4631e6e08",
+      "name": "basic_claim",
+      "private_key": "012565a967c07f5e83b3620fffab22d4e9b2a799bfd2d4bac50173c7695f1a08",
+      "public_key": "d89d33e0988581042afd5d0edb0559513a21cbdbe7408a60510b4a90682b5b9a"
+    },
+    {
+      "canonical_json": "{\"data\":\"hash_abc123\",\"metadata\":\"user_id:12345\",\"timestamp\":1704067200}",
+      "claim": {
+        "data": "hash_abc123",
+        "metadata": "user_id:12345",
+        "timestamp": 1704067200
+      },
+      "description": "Claim with optional metadata field",
+      "expected_signature": "6993ba19b7a918484d3aa6d5578e197f8e98d5b701c72942ce6d7d50e9426eb5cebc04fda2c7f9bdc1fe8e64993a70724e86a55b1e0665edb017209f51759e05",
+      "name": "claim_with_metadata",
+      "private_key": "dd441b1014eb081a4b2edf74421622fcb4faf5138ea89112fa544fe821cef9d5",
+      "public_key": "f4f2c6714ae8e34c7900759680c118b1a61866d3679ad7fcf6d555c4b10db2a7"
+    },
+    {
+      "description": "SHA-256 hash test vectors",
+      "name": "hash_computation",
+      "test_cases": [
+        {
+          "expected_hash": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+          "input": "hello"
+        },
+        {
+          "expected_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "input": ""
+        },
+        {
+          "expected_hash": "1c8c99efff248fe7ea76fed8b6531fe0217ad89d4e7665dc0d011996f9e902c0",
+          "input": "Provncloud SDK"
+        }
+      ]
+    },
+    {
+      "canonical_json": "{\"data\":\"cross_test_data\",\"timestamp\":1704067200}",
+      "claim": {
+        "data": "cross_test_data",
+        "timestamp": 1704067200
+      },
+      "description": "Same claim signed by two different keys",
+      "name": "cross_sign_same_claim",
+      "signatures": [
+        {
+          "private_key": "720fac6755ed2629a14b656b68d8447255c34a94455ecf2a0decf7e5165e5488",
+          "public_key": "9857bed144e42a0334ce304a17060d89f75f36a4685c3907b2b58716d89fd6bc",
+          "signature": "834fee4eeee221376961cd79f3c5d405d4fb39bf45d8dada247389c76690adf561bff4aae166188136c304f7437f4493f1ba746a1cd6cc6afc246dd99f08fe07",
+          "signer": "key_a"
+        },
+        {
+          "private_key": "6447fe28da7128360564e427e41c2bed196690b0629bfb51e132a733cbd7a1a6",
+          "public_key": "60e0c6b0332da73fc2e8a34700c8d5fb392d00df6ddd50db26ba654245ce6059",
+          "signature": "170080639afcbf432b251107801b2390bfdf1dd516cd0ea7c6ed6ed4b0b84eb0be515b3d50d8556b9ede8fa252cc68e04431ecedecb6fb451cf44c3684cb200c",
+          "signer": "key_b"
+        }
+      ]
+    }
+  ]
+}

@@ -3,8 +3,14 @@ name: Rust CI
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'rust/**'
+      - 'spec/**'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'rust/**'
+      - 'spec/**'
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,24 +19,33 @@ jobs:
   test:
     name: Test (std)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Run tests
-        run: cargo test --verbose
+        run: cargo test --all-features --verbose
 
   no_std:
     name: Test (no-std/alloc)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Check no-std (alloc)
+      - name: Check no-std
         run: cargo check --no-default-features --features alloc --verbose
 
   fmt_clippy:
     name: Format & Clippy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -39,4 +54,4 @@ jobs:
       - name: Check formatting
         run: cargo fmt -- --check
       - name: Run clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --all-features -- -D warnings

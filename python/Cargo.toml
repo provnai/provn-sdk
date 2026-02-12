@@ -1,0 +1,18 @@
+[package]
+name = "provn-sdk-python"
+version = "0.2.0"
+edition = "2021"
+description = "Python bindings for Provncloud SDK"
+license = "MIT"
+
+[lib]
+name = "provn_sdk"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20.0", features = ["extension-module"] }
+provn_sdk_core = { package = "provn-sdk", path = "../rust", default-features = false, features = ["std"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+hex = "0.4"
+ed25519-dalek = "2.1"

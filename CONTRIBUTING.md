@@ -15,12 +15,37 @@ Thank you for your interest in contributing to the Provncloud SDK! We welcome co
    cargo test
    ```
 
-## 🛠️ Development Guidelines
 
-- **Keep it minimal**: The SDK should remain a lean, no-std-friendly cryptographic engine.
-- **Alphabetical Ordering**: When adding fields to the `Claim` struct, maintain alphabetical order to ensure JCS (Canonical JSON) compliance.
-- **No-std First**: Always verify that your changes compile with `--no-default-features --features alloc`.
-- **Documentation**: Add doc-tests for any new public functions.
+## 🏗️ Monorepo Architecture
+
+This repository contains SDK implementations in multiple languages:
+
+```
+provn-sdk/
+├── spec/           # Shared specification (single source of truth)
+├── rust/           # Core Rust SDK (no-std compatible)
+├── rust-wasm/      # WebAssembly bindings
+├── typescript/     # TypeScript/Node.js SDK
+├── python/         # Python SDK (Native Rust extension via PyO3)
+├── go/             # Go SDK
+├── java/           # Java SDK
+└── examples/       # Usage examples for each language
+```
+
+## 🛠️ Developer Management (`manage.py`)
+
+We provide a unified script for building and testing the entire monorepo.
+
+```bash
+# Build all SDKs
+python manage.py build
+
+# Run all tests
+python manage.py test
+
+# Clean artifacts
+python manage.py clean
+```
 
 ## 🧪 Testing
 
@@ -44,3 +69,4 @@ cargo check --no-default-features --features alloc
 ## ⚖️ License
 
 By contributing, you agree that your contributions will be licensed under the **MIT License**.
+

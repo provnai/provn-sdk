@@ -64,7 +64,7 @@ pub type Result<T> = core::result::Result<T, SdkError>;
 /// A Claim representing a statement of truth to be anchored.
 /// Fields are ordered alphabetically to ensure "Canonical JSON" (JCS - RFC 8785)
 /// compliance when using deterministic serialization.
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Claim {
     /// The actual data being claimed (e.g., "AI Model v1.0 Accuracy: 98%")
     pub data: String,
@@ -136,14 +136,16 @@ pub fn compute_hash(data: &[u8]) -> String {
     hex::encode(hasher.finalize())
 }
 
-/// Generate a new random keypair (requires "std" for entropy)
+/// Generate a new random keypair
+///
+/// Requires either "std" or "getrandom" feature for entropy source.
 ///
 /// # Example
 /// ```
 /// use provn_sdk::generate_keypair;
 /// let key = generate_keypair();
 /// ```
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "getrandom"))]
 pub fn generate_keypair() -> SigningKey {
     use rand::rngs::OsRng;
     SigningKey::generate(&mut OsRng)

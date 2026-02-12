@@ -2,113 +2,120 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2021-blue.svg)](https://www.rust-lang.org/)
-[![Rust CI](https://github.com/provnai/provn-sdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/provnai/provn-sdk/actions/workflows/ci.yml)
+[![NPM](https://img.shields.io/badge/NPM-%40provn%2Fsdk-red.svg)](https://www.npmjs.com/package/@provn/sdk)
+[![PyPI](https://img.shields.io/badge/PyPI-provn--sdk-yellow.svg)](https://pypi.org/project/provn-sdk/)
+[![Go](https://img.shields.io/badge/Go-Reference-blue.svg)](https://pkg.go.dev/github.com/provnai/provn-sdk/go)
 
-Provncloud SDK is a lightweight cryptographic toolkit for signing and verifying data claims. It allows you to generate local audit trails—ensuring that sensitive data never leaves your environment while still providing a permanent, verifiable proof anchored to [Arweave AO](https://ao.arweave.dev) and [Solana](https://solana.com).
-
----
-
-## 🏗️ How it Works: The Anchoring Flow
-
-This SDK is the first step in a decentralized proof-of-existence pipeline:
-
-1.  **Local Signing**: You sign a data hash using your private Ed25519 key (Identity).
-2.  **API Submission**: You send the signed claim to the Provncloud API. The API verifies your signature but never sees your raw data.
-3.  **L3 Batching**: Provncloud batches multiple claims into an "Industrial Receipt" for high-throughput efficiency.
-4.  **Dual Anchoring**:
-    - The full audit log is permanently stored on Arweave AO.
-    - A cryptographic commitment (state root) is anchored to Solana for high-speed finality and settlement.
+**The standard for privacy-preserving digital signatures and data anchoring.**
+Provncloud SDK allows you to cryptographically sign data and anchor it to Arweave AO and Solana without revealing the raw content.
 
 ---
 
-## 🧭 Core Principles
+## 🚀 Quickstart
 
-This SDK is built to give you full control over your data identity:
-1.  **Identity Control**: You manage your own Ed25519 keys. Only your signatures are shared, never your private keys.
-2.  **Independent Verification**: You can verify any claim receipt locally and independently, with no reliance on central servers.
+Choose your language to get started in seconds.
 
----
+### 🐍 Python
+```bash
+pip install provn-sdk
+```
+```python
+import provn_sdk
+import time
 
-## 📦 Installation
+# 1. Generate Identity
+keys = provn_sdk.generate_keypair()
 
-Add this to your `Cargo.toml`:
+# 2. Create & Sign Claim
+claim = provn_sdk.create_claim("My Critical Data", int(time.time()), None)
+signed = provn_sdk.sign_claim(claim, keys['private_key'])
 
-```toml
-[dependencies]
-provn-sdk = { git = "https://github.com/provnai/provn-sdk.git" }
+# 3. Verify (Offline)
+is_valid = provn_sdk.verify_claim(signed)
+print(f"Verified: {is_valid}")
 ```
 
-For no-std environments (e.g., Solana programs):
-```toml
-[dependencies]
-provn-sdk = { git = "https://github.com/provnai/provn-sdk.git", default-features = false, features = ["alloc"] }
+### 📘 TypeScript / Node.js
+```bash
+npm install @provn/sdk
+```
+```typescript
+import { ProvnSDK } from '@provn/sdk';
+
+async function main() {
+  const sdk = new ProvnSDK();
+  
+  // 1. Generate Identity
+  const identity = await sdk.generateKeypair();
+  
+  // 2. Sign
+  const claim = await sdk.createClaim("My Critical Data");
+  const signed = await sdk.signClaim(claim, identity);
+  
+  // 3. Verify
+  const isValid = await sdk.verifyClaim(signed);
+  console.log("Verified:", isValid);
+}
+main();
 ```
 
----
-
-## 🚀 Quick Start
-
-### 1. Generate a Sovereign Keypair
+### 🦀 Rust
+```bash
+cargo add provn-sdk
+```
 ```rust
-use provn_sdk::generate_keypair; // Requires "std"
+use provn_sdk::{Claim, sign_claim, verify_claim, generate_keypair};
 
-// Create a new signing key (Ed25519)
-let signing_key = generate_keypair();
-let public_key = hex::encode(signing_key.verifying_key().as_bytes());
-
-println!("Digital Identity: ed25519:{}", public_key);
+fn main() {
+    let key = generate_keypair();
+    let claim = Claim::new("My Critical Data".to_string());
+    
+    let signed = sign_claim(&claim, &key).unwrap();
+    let is_valid = verify_claim(&signed).unwrap();
+    println!("Verified: {}", is_valid);
+}
 ```
 
-### 2. Sign a Local Claim
-```rust
-use provn_sdk::{Claim, sign_claim, compute_hash};
-
-// For privacy, hash your data first (raw data stays on your device)
-let data = "AI Model v1.0 Accuracy: 98.42%";
-let hash = compute_hash(data.as_bytes());
-
-// Create a claim with the hash
-let claim = Claim::new(hash); // Uses current system time (Requires "std")
-
-// Sign locally (Data remains on your device)
-let signed_claim = sign_claim(&claim, &signing_key).expect("Signing failed");
-
-println!("Claim Hash: {}", signed_claim.claim.data);
-println!("Signature: {}", signed_claim.signature);
+### 🐹 Go
+```bash
+go get github.com/provnai/provn-sdk/go
 ```
+```go
+package main
 
-### 3. Verify a Receipt
-```rust
-use provn_sdk::verify_claim;
+import (
+    "fmt"
+    provnsdk "github.com/provnai/provn-sdk/go/pkg"
+)
 
-// Verify the integrity of a signed claim
-let is_valid = verify_claim(&signed_claim).unwrap_or(false);
-assert!(is_valid);
+func main() {
+    // 1. Generate Identity
+    keypair, _ := provnsdk.GenerateKeypair()
+    
+    // 2. Create & Sign Claim
+    claim := provnsdk.CreateClaim("My Critical Data", "")
+    signed, _ := provnsdk.SignClaim(claim, keypair)
+    
+    // 3. Verify (Offline)
+    isValid, _ := provnsdk.VerifyClaim(signed)
+    fmt.Printf("Verified: %v\n", isValid)
+}
 ```
 
 ---
 
-## 🛠️ Technical Architecture
+## 📚 Documentation
 
-This library is a portable implementation of the `ed25519-dalek` crate, designed to provide a consistent identity layer across different environments—from web servers to resource-constrained on-chain processes.
-
-| Feature | Implementation | Complexity |
-| :--- | :--- | :--- |
-| **Cryptography** | Ed25519 (Edwards-curve Digital Signature Algorithm) | O(1) Verification |
-| **Serialization** | JCS (RFC 8785) Canonical JSON | Sorted Keys |
-| **Runtime** | `no-std` + `alloc` | Solana/AO Compatible |
-| **Payload Capacity** | 2KB (Optimized for L3 Batching) | High throughput |
-
----
-
-## ⚖️ License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
+- [**Protocol Specification**](spec/SPEC.md): Deep dive into the format.
+- [**Use Cases**](USE_CASES.md): Real-world application examples.
+- [**Contributing**](CONTRIBUTING.md): How to build this monorepo from source.
+- [**Changelog**](CHANGELOG.md): Version history and release notes.
+- [**Code of Conduct**](CODE_OF_CONDUCT.md): Community guidelines.
 
 ## 🔗 Ecosystem
-
 - [Provncloud](https://provncloud.com/)
 - [Arweave AO](https://ao.arweave.dev)
 - [Solana](https://solana.com)
+
+## ⚖️ License
+MIT License - see [LICENSE](LICENSE) file

@@ -31,7 +31,7 @@ fn main() {
 
     // 4. INDEPENDENT VERIFICATION: Confirm the claim is authentic
     // This can be done by anybody with the public key,
-    // without needing to contact the Provn API.
+    // without needing to contact the Provncloud API.
     let is_valid = verify_claim(&signed_claim).unwrap_or(false);
 
     if is_valid {
