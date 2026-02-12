@@ -2,7 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-2021-blue.svg)](https://www.rust-lang.org/)
-[![NPM](https://img.shields.io/badge/NPM-%40provn%2Fsdk-red.svg)](https://www.npmjs.com/package/@provn/sdk)
+[![Crates.io](https://img.shields.io/crates/v/provn-sdk)](https://crates.io/crates/provn-sdk)
+[![NPM](https://img.shields.io/badge/NPM-%40provncloud%2Fsdk-red.svg)](https://www.npmjs.com/package/@provncloud/sdk)
 [![PyPI](https://img.shields.io/badge/PyPI-provn--sdk-yellow.svg)](https://pypi.org/project/provn-sdk/)
 [![Go](https://img.shields.io/badge/Go-Reference-blue.svg)](https://pkg.go.dev/github.com/provnai/provn-sdk/go)
 
@@ -37,10 +38,10 @@ print(f"Verified: {is_valid}")
 
 ### 📘 TypeScript / Node.js
 ```bash
-npm install @provn/sdk
+npm install @provncloud/sdk
 ```
 ```typescript
-import { ProvnSDK } from '@provn/sdk';
+import { ProvnSDK } from '@provncloud/sdk';
 
 async function main() {
   const sdk = new ProvnSDK();

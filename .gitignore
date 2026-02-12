@@ -54,6 +54,9 @@ nul
 # Scripts directory (contains build tools)
 # Note: scripts/ is tracked, but its contents should not be build artifacts
 
+# TypeScript build artifacts
+typescript/dist/
+
 # WASM binaries (build artifacts)
 **/*.wasm
 python/src/provn_sdk/*.wasm

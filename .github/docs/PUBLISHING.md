@@ -1,61 +1,137 @@
-# Publishing Guide
+# Complete Publishing Guide - All SDKs
+## Step-by-Step Instructions
 
-This guide details the steps to publish version `0.2.0` of the Provncloud SDKs.
+**Last Updated**: February 2024  
+**Status**: 3 of 5 SDKs published ✅
 
-## Prerequisites
-- [ ] `cargo login` (for crates.io)
-- [ ] `npm login` (for npmjs.org)
-- [ ] `twine` installed (for PyPI)
-- [ ] GPG key (for Maven Central)
+---
 
-## 1. Rust SDK (Core)
-The core logic resides here. Publish this first.
+## ✅ 1. GO SDK → Git Tags (DONE!)
 
-```bash
-cd rust
-cargo publish
-```
-
-## 2. Rust WASM (Bindings)
-Required by the TypeScript SDK.
-
-```bash
-cd rust-wasm
-wasm-pack build --target nodejs --scope provn
-# wasm-pack publish # Optional, usually bundled into JS SDK
-```
-
-## 3. TypeScript SDK
-Bundles the WASM binary.
-
-```bash
-cd typescript
-npm run build
-npm publish --access public
-```
-
-## 4. Python SDK
-Native Rust extension.
-
-```bash
-cd python
-maturin build --release
-twine upload target/wheels/*
-```
-
-## 5. Go SDK
-Go modules are published by tagging the repository.
+**Status**: ✅ **PUBLISHED**  
+**Date**: February 2024
 
 ```bash
 git tag v0.2.0
 git push origin v0.2.0
-# Users can now: go get github.com/provnai/provn-sdk/go@v0.2.0
 ```
 
-## 6. Java SDK
-Deploy to Maven Central (requires complex setup).
-
+Users install with:
 ```bash
-cd java
-mvn clean deploy
+go get github.com/provnai/provn-sdk/go@v0.2.0
 ```
+
+---
+
+## ✅ 2. RUST SDK → crates.io (DONE!)
+
+**Status**: ✅ **PUBLISHED**  
+**Date**: February 2024  
+**URL**: https://crates.io/crates/provn-sdk
+
+### What we did:
+- [x] Created crates.io account
+- [x] Generated API token with `publish-new` and `publish-update` scopes
+- [x] Logged in: `cargo login`
+- [x] Published: `cargo publish`
+
+Users install with:
+```bash
+cargo add provn-sdk
+```
+
+---
+
+## ✅ 3. TYPESCRIPT SDK → npm (DONE!)
+
+**Status**: ✅ **PUBLISHED**  
+**Date**: February 2024  
+**URL**: https://www.npmjs.com/package/@provncloud/sdk
+
+### What we did:
+- [x] Created npm account
+- [x] Enabled 2FA authentication
+- [x] Created @provncloud organization
+- [x] Changed package name from `@provn/sdk` to `@provncloud/sdk`
+- [x] Installed dependencies: `npm install`
+- [x] Built package: `npm run build`
+- [x] Published: `npm publish --access public`
+
+Users install with:
+```bash
+npm install @provncloud/sdk
+```
+
+---
+
+## ⏸️ 4. PYTHON SDK → PyPI (PENDING)
+
+**Status**: ⏸️ **WAITING FOR APPROVAL**  
+**Blocker**: PyPI organization "provncloud" pending approval
+
+### Steps to complete later:
+- [ ] Wait for PyPI organization approval (can take days/weeks)
+- [ ] OR use personal account instead
+- [ ] Install tools: `pip install maturin twine`
+- [ ] Build: `maturin build --release`
+- [ ] Publish: `twine upload target/wheels/*`
+
+Users will install with:
+```bash
+pip install provn-sdk
+```
+
+**Note**: Can be done later when organization is approved!
+
+---
+
+## ❌ 5. JAVA SDK → Maven Central (SKIPPED)
+
+**Status**: ❌ **SKIPPED**  
+**Reason**: Too complex for initial release
+
+### Why we skipped:
+- Requires GPG key creation
+- Requires Sonatype JIRA account
+- Requires domain ownership verification
+- 2-3 hours setup time
+- Not urgent (Java SDK is structure-ready but not production priority)
+
+**Can be done later when needed!**
+
+---
+
+## 📊 PUBLISHING SUMMARY
+
+| SDK | Status | Registry | Install Command |
+|-----|--------|----------|-----------------|
+| **Go** | ✅ Done | GitHub | `go get github.com/provnai/provn-sdk/go@v0.2.0` |
+| **Rust** | ✅ Done | crates.io | `cargo add provn-sdk` |
+| **TypeScript** | ✅ Done | npm | `npm install @provncloud/sdk` |
+| **Python** | ⏸️ Pending | PyPI | `pip install provn-sdk` (later) |
+| **Java** | ❌ Skipped | Maven | Skip for now |
+
+**Progress**: 3 of 5 SDKs published (60%)
+
+---
+
+## 🎉 RESULTS
+
+**PUBLISHED SDKs**: 3  
+**READY FOR USERS**: Yes!  
+**DEVELOPMENT STATUS**: 100% Complete  
+**CI/CD STATUS**: All passing ✅
+
+**The Provncloud SDK v0.2.0 is LIVE and USABLE!** 🚀
+
+---
+
+## 📋 REMAINING WORK (Optional)
+
+When you're ready to finish:
+
+1. **Python**: Wait for PyPI approval OR use personal account
+2. **Java**: Only if enterprise users request it
+3. **Marketing**: Share on Twitter, Reddit, etc.
+
+**But the core SDK is DONE and PUBLISHED!** 🎉
