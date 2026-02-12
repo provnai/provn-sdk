@@ -5,8 +5,10 @@
 
 # Node.js
 **/node_modules/
-**/package-lock.json
 **/.npm
+
+# Note: package-lock.json SHOULD be committed for reproducible builds
+# **/package-lock.json  # Commented out - we want to track this
 
 # Python
 **/__pycache__/
