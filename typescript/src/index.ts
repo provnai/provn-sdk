@@ -45,8 +45,8 @@ function ensureInitialized(): void {
  * KeyPair interface
  */
 export interface KeyPair {
-  privateKey: string;  // Hex-encoded 32 bytes
-  publicKey: string;   // Hex-encoded 32 bytes
+  private_key: string;  // Hex-encoded 32 bytes
+  public_key: string;   // Hex-encoded 32 bytes
 }
 
 /**
@@ -63,7 +63,7 @@ export interface Claim {
  */
 export interface SignedClaim {
   claim: Claim;
-  publicKey: string;
+  public_key: string;
   signature: string;
 }
 
@@ -77,8 +77,8 @@ export function generateKeypair(): KeyPair {
   const result = wasm_generate_keypair();
   const parsed = JSON.parse(result);
   return {
-    privateKey: parsed.private_key,
-    publicKey: parsed.public_key,
+    private_key: parsed.private_key,
+    public_key: parsed.public_key,
   };
 }
 
@@ -108,8 +108,25 @@ export function createClaim(
   metadata?: string
 ): Claim {
   ensureInitialized();
-  const json = wasm_create_claim_with_timestamp(data, BigInt(timestamp), metadata || undefined);
-  return JSON.parse(json);
+
+  // Validate timestamp to prevent BigInt overflow or negative times
+  if (timestamp < 0 || timestamp > Number.MAX_SAFE_INTEGER) {
+    throw new Error("Invalid timestamp bounds.");
+  }
+
+  // Validate data is not empty
+  if (!data || data.trim().length === 0) {
+    throw new Error("Claim data cannot be empty.");
+  }
+
+  const jsonString = wasm_create_claim_with_timestamp(data, BigInt(timestamp), metadata || undefined);
+
+  const encoder = new TextEncoder();
+  if (encoder.encode(jsonString).length > 2048) {
+    throw new Error("Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
+  }
+
+  return JSON.parse(jsonString);
 }
 
 /**
@@ -134,11 +151,11 @@ export function createClaimNow(data: string, metadata?: string): Claim {
 export function signClaim(claim: Claim, keyPair: KeyPair): SignedClaim {
   ensureInitialized();
   const claimJson = JSON.stringify(claim);
-  const signedJson = wasm_sign_claim(claimJson, keyPair.privateKey);
+  const signedJson = wasm_sign_claim(claimJson, keyPair.private_key);
   const parsed = JSON.parse(signedJson);
   return {
     claim: parsed.claim,
-    publicKey: parsed.public_key,
+    public_key: parsed.public_key,
     signature: parsed.signature,
   };
 }
@@ -153,12 +170,13 @@ export function verifyClaim(signedClaim: SignedClaim): boolean {
   ensureInitialized();
   const json = JSON.stringify({
     claim: signedClaim.claim,
-    public_key: signedClaim.publicKey,
+    public_key: signedClaim.public_key,
     signature: signedClaim.signature,
   });
   try {
     return wasm_verify_claim(json);
   } catch (error) {
+    console.error("Verification error:", error);
     return false;
   }
 }

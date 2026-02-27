@@ -1,8 +1,8 @@
 # Complete Publishing Guide - All SDKs
 ## Step-by-Step Instructions
 
-**Last Updated**: February 2024  
-**Status**: 3 of 5 SDKs published ✅
+**Last Updated**: February 2026  
+**Status**: 5 of 5 SDKs verified for v0.3.0 ✅
 
 ---
 
@@ -12,13 +12,13 @@
 **Date**: February 2024
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 Users install with:
 ```bash
-go get github.com/provnai/provn-sdk/go@v0.2.0
+go get github.com/provnai/provn-sdk/go@v0.3.0
 ```
 
 ---
@@ -105,13 +105,13 @@ pip install provn-sdk
 
 | SDK | Status | Registry | Install Command |
 |-----|--------|----------|-----------------|
-| **Go** | ✅ Done | GitHub | `go get github.com/provnai/provn-sdk/go@v0.2.0` |
-| **Rust** | ✅ Done | crates.io | `cargo add provn-sdk` |
-| **TypeScript** | ✅ Done | npm | `npm install @provncloud/sdk` |
-| **Python** | ⏸️ Pending | PyPI | `pip install provn-sdk` (later) |
-| **Java** | ❌ Skipped | Maven | Skip for now |
+| **Go** | ✅ Ready | GitHub | `go get github.com/provnai/provn-sdk/go@v0.3.0` |
+| **Rust** | ✅ Ready | crates.io | `cargo add provn-sdk@0.3.0` |
+| **TypeScript** | ✅ Ready | npm | `npm install @provncloud/sdk@0.3.0` |
+| **Python** | ✅ Ready | PyPI | `pip install provn-sdk==0.3.0` |
+| **Java** | ✅ Ready | GitHub | Use JitPack or local install |
 
-**Progress**: 3 of 5 SDKs published (60%)
+**Progress**: 5 of 5 SDKs production-ready (100%)
 
 ---
 

@@ -11,13 +11,12 @@ fn main() {
 
     // Test Vector 1: Basic claim
     let keypair1 = generate_keypair();
-    let claim1 = Claim::new_with_timestamp("test_data_123".to_string(), 1704067200);
+    let claim1 = Claim::new_with_timestamp("test_data_123".to_string(), 1704067200).unwrap();
     let signed1 = sign_claim(&claim1, &keypair1).unwrap();
 
     let vector1 = json!({
         "name": "basic_claim",
         "description": "Basic claim with data and timestamp",
-        "private_key": hex::encode(keypair1.to_bytes()),
         "public_key": hex::encode(keypair1.verifying_key().as_bytes()),
         "claim": {
             "data": claim1.data,
@@ -29,7 +28,7 @@ fn main() {
 
     // Test Vector 2: Claim with metadata
     let keypair2 = generate_keypair();
-    let mut claim2 = Claim::new_with_timestamp("hash_abc123".to_string(), 1704067200);
+    let mut claim2 = Claim::new_with_timestamp("hash_abc123".to_string(), 1704067200).unwrap();
     claim2.metadata = Some("user_id:12345".to_string());
     let signed2 = sign_claim(&claim2, &keypair2).unwrap();
 
@@ -74,7 +73,7 @@ fn main() {
     // Test Vector 4: Cross-sign test (same claim, different keys)
     let keypair_a = generate_keypair();
     let keypair_b = generate_keypair();
-    let claim_cross = Claim::new_with_timestamp("cross_test_data".to_string(), 1704067200);
+    let claim_cross = Claim::new_with_timestamp("cross_test_data".to_string(), 1704067200).unwrap();
 
     let signed_by_a = sign_claim(&claim_cross, &keypair_a).unwrap();
     let signed_by_b = sign_claim(&claim_cross, &keypair_b).unwrap();

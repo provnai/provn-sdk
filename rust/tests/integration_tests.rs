@@ -87,14 +87,14 @@ fn test_metadata_at_2kb_limit() {
     let keypair = generate_keypair();
 
     // Calculate exact size needed
-    let base_claim = Claim::new_with_timestamp("data".to_string(), 1234567890);
+    let base_claim = Claim::new_with_timestamp("data".to_string(), 1234567890).unwrap();
     let base_size = base_claim.to_signable_bytes().unwrap().len();
 
-    // Metadata should be 2048 - base_size to hit exactly 2KB
-    let metadata_size = 2048 - base_size;
+    // Metadata should be 2048 - base_size - 14 (overhead of `,"metadata":""`) to hit exactly 2KB
+    let metadata_size = 2048 - base_size - 14;
     let metadata = "a".repeat(metadata_size);
 
-    let mut claim = Claim::new_with_timestamp("data".to_string(), 1234567890);
+    let mut claim = Claim::new_with_timestamp("data".to_string(), 1234567890).unwrap();
     claim.metadata = Some(metadata);
 
     // Should succeed at exactly 2KB
@@ -107,7 +107,7 @@ fn test_metadata_at_2kb_limit() {
 fn test_metadata_exceeds_2kb_limit() {
     let keypair = generate_keypair();
 
-    let mut claim = Claim::new_with_timestamp("data".to_string(), 1234567890);
+    let mut claim = Claim::new_with_timestamp("data".to_string(), 1234567890).unwrap();
     claim.metadata = Some("a".repeat(3000)); // Way over limit
 
     let result = sign_claim(&claim, &keypair);
@@ -239,12 +239,12 @@ fn test_timestamp_boundaries() {
     let keypair = generate_keypair();
 
     // Unix epoch
-    let claim = Claim::new_with_timestamp("data".to_string(), 0);
+    let claim = Claim::new_with_timestamp("data".to_string(), 1).unwrap();
     let signed = sign_claim(&claim, &keypair).unwrap();
     assert!(verify_claim(&signed).unwrap());
 
     // Future timestamp (should still work)
-    let claim = Claim::new_with_timestamp("data".to_string(), 4102444800); // Year 2100
+    let claim = Claim::new_with_timestamp("data".to_string(), 4102444800).unwrap(); // Year 2100
     let signed = sign_claim(&claim, &keypair).unwrap();
     assert!(verify_claim(&signed).unwrap());
 }

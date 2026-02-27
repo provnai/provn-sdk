@@ -1,9 +1,10 @@
 [package]
 name = "provn-sdk"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Universal, no-std Rust SDK for privacy-preserving digital signatures and data anchoring."
 license = "MIT"
+readme = "README.md"
 repository = "https://github.com/provnai/provn-sdk"
 keywords = ["cryptography", "ed25519", "no-std", "identity", "anchoring"]
 categories = ["cryptography", "no-std", "embedded"]

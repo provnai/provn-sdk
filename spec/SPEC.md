@@ -100,9 +100,9 @@ Returns SHA-256 hash as hex string
 
 ## 6. Size Limits
 
-**Metadata Limit**: 2KB (2048 bytes)
+**Payload Limit**: 2KB (2048 bytes) for the entire serialized JSON structure.
 
-Error message: "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data."
+Error message: "Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data."
 
 ## 7. Error Types
 
@@ -116,6 +116,8 @@ enum SdkError {
 ```
 
 ## 8. Test Vectors
+
+**WARNING:** Test vectors contain deterministic private keys purely for cross-compatibility testing and CI execution. These keys MUST NEVER be used in a production environment.
 
 ### Vector 1: Basic Claim
 ```json

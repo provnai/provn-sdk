@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyString}; 
+use pyo3::types::PyDict; 
 use provn_sdk_core::{Claim, SignedClaim};
 use provn_sdk_core::generate_keypair as rs_generate_keypair;
 use provn_sdk_core::sign_claim as rs_sign_claim;
@@ -28,8 +28,9 @@ fn generate_keypair() -> HashMap<String, String> {
 /// Create a claim
 /// Returns dict representing the claim
 #[pyfunction]
-fn create_claim(data: String, timestamp: u64, metadata: Option<String>) -> HashMap<String, PyObject> {
-    let claim = Claim::new_with_timestamp(data, timestamp);
+fn create_claim(data: String, timestamp: u64, metadata: Option<String>) -> PyResult<HashMap<String, PyObject>> {
+    let claim = Claim::new_with_timestamp(data, timestamp).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Validation Error: {}", e)))?;
+    
     // Add metadata if present
     let mut final_claim = claim;
     final_claim.metadata = metadata;
@@ -42,7 +43,7 @@ fn create_claim(data: String, timestamp: u64, metadata: Option<String>) -> HashM
             map.insert("metadata".to_string(), meta.to_object(py));
         }
     });
-    map
+    Ok(map)
 }
 
 /// Sign a claim

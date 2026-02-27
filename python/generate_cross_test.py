@@ -1,18 +1,20 @@
-import provn_sdk
+from provn_sdk import ProvnSDK
 import json
 import os
 
-print(f"Generating cross-language test vector with SDK v{provn_sdk.get_version()}")
+sdk = ProvnSDK()
+
+print(f"Generating cross-language test vector with SDK v{sdk.get_version()}")
 
 # 1. Generate Key
-key = provn_sdk.generate_keypair()
+key = sdk.generate_keypair()
 
 # 2. Create Claim
 # Using fixed timestamp for reproducibility in manual checks, though signature is deterministic anyway
-claim = provn_sdk.create_claim("Hello Cross-Language World", 1700000000, "{\"env\": \"test\"}")
+claim = sdk.create_claim("Hello Cross-Language World", 1700000000, "{\"env\": \"test\"}")
 
 # 3. Sign
-signed = provn_sdk.sign_claim(claim, key['private_key'])
+signed = sdk.sign_claim(claim, key['private_key'])
 
 # 4. Save to JSON
 output_path = "../cross_lang_claim.json"

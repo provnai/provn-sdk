@@ -104,8 +104,8 @@ pub fn wasm_version() -> String {
 /// Uses JavaScript's Date.now() for timestamp
 #[wasm_bindgen]
 pub fn wasm_create_claim(data: &str, metadata: Option<String>) -> Result<String, JsValue> {
-    // Get current timestamp from JS
-    let timestamp = (js_sys::Date::now() / 1000.0) as u64;
+    // Get current timestamp from JS safely without fp64 precision loss
+    let timestamp = (js_sys::Math::trunc(js_sys::Date::now() / 1000.0)) as u64;
 
     let claim = Claim {
         data: data.to_string(),

@@ -30,7 +30,7 @@ public class ProvnSDKTest {
     }
     
     @Test
-    public void testCreateClaim() {
+    public void testCreateClaim() throws ProvnSDK.SDKException {
         ProvnSDK.Claim claim = ProvnSDK.createClaim("test_data", "test_metadata");
         
         assertEquals("test_data", claim.data);
@@ -66,7 +66,7 @@ public class ProvnSDKTest {
     }
     
     @Test
-    public void testMetadataSizeLimit() {
+    public void testMetadataSizeLimit() throws ProvnSDK.SDKException {
         ProvnSDK.KeyPair kp = ProvnSDK.generateKeypair();
         StringBuilder largeMetadata = new StringBuilder();
         for (int i = 0; i < 3000; i++) {

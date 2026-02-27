@@ -1,9 +1,11 @@
 package com.provn.sdk;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
@@ -24,9 +26,10 @@ import java.time.Instant;
  */
 public class ProvnSDK {
     
-    private static final int MAX_METADATA_SIZE = 2048;
+    private static final int MAX_PAYLOAD_SIZE = 2048;
     private static final ObjectMapper mapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
             .disable(SerializationFeature.INDENT_OUTPUT);
     
     /**
@@ -51,8 +54,11 @@ public class ProvnSDK {
      * SignedClaim wraps a Claim with cryptographic proof
      */
     public static class SignedClaim {
+        @JsonProperty("claim")
         public Claim claim;
+        @JsonProperty("public_key")
         public String publicKey;
+        @JsonProperty("signature")
         public String signature;
         
         public SignedClaim() {}
@@ -68,7 +74,9 @@ public class ProvnSDK {
      * KeyPair for Ed25519
      */
     public static class KeyPair {
+        @JsonProperty("private_key")
         public final byte[] privateKey;
+        @JsonProperty("public_key")
         public final byte[] publicKey;
         
         public KeyPair(byte[] privateKey, byte[] publicKey) {
@@ -76,6 +84,10 @@ public class ProvnSDK {
             this.publicKey = publicKey;
         }
         
+        /**
+         * Export the private key as hex.
+         * WARNING: This seed must be heavily guarded. It grants full control over the identity. 
+         */
         public String exportPrivateKey() {
             return Hex.toHexString(privateKey);
         }
@@ -89,7 +101,13 @@ public class ProvnSDK {
      * Generate a new Ed25519 keypair
      */
     public static KeyPair generateKeypair() {
-        SecureRandom random = new SecureRandom();
+        SecureRandom random;
+        try {
+            random = SecureRandom.getInstanceStrong();
+        } catch (NoSuchAlgorithmException e) {
+            random = new SecureRandom(); // Fallback to default if strong algorithm not available
+        }
+        
         byte[] privateKeyBytes = new byte[32];
         random.nextBytes(privateKeyBytes);
         
@@ -122,7 +140,13 @@ public class ProvnSDK {
     /**
      * Create a claim with explicit timestamp
      */
-    public static Claim createClaimWithTimestamp(String data, long timestamp, String metadata) {
+    public static Claim createClaimWithTimestamp(String data, long timestamp, String metadata) throws SDKException {
+        if (data == null || data.trim().isEmpty()) {
+            throw new SDKException("ValidationError", "Data field cannot be empty.");
+        }
+        if (timestamp < 1 || timestamp > 32503680000L) {
+             throw new SDKException("ValidationError", "Timestamp out of bounds.");
+        }
         return new Claim(data, timestamp, metadata);
     }
     
@@ -134,9 +158,9 @@ public class ProvnSDK {
             String json = mapper.writeValueAsString(claim);
             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
             
-            if (bytes.length > MAX_METADATA_SIZE) {
+            if (bytes.length > MAX_PAYLOAD_SIZE) {
                 throw new SDKException("ValidationError", 
-                    "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
+                    "Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
             }
             
             return bytes;

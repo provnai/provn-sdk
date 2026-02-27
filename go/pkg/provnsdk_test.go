@@ -68,7 +68,7 @@ func TestSignAndVerifyClaim(t *testing.T) {
 		t.Fatalf("Failed to generate keypair: %v", err)
 	}
 
-	claim := CreateClaimWithTimestamp("test_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, "")
 
 	signed, err := SignClaim(claim, kp)
 	if err != nil {
@@ -96,7 +96,7 @@ func TestSignAndVerifyClaim(t *testing.T) {
 
 func TestVerifyTamperedClaim(t *testing.T) {
 	kp, _ := GenerateKeypair()
-	claim := CreateClaimWithTimestamp("original_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("original_data", 1234567890, "")
 
 	signed, _ := SignClaim(claim, kp)
 
@@ -115,7 +115,7 @@ func TestVerifyTamperedClaim(t *testing.T) {
 
 func TestVerifyTamperedSignature(t *testing.T) {
 	kp, _ := GenerateKeypair()
-	claim := CreateClaimWithTimestamp("test_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, "")
 
 	signed, _ := SignClaim(claim, kp)
 
@@ -136,7 +136,7 @@ func TestVerifyWrongPublicKey(t *testing.T) {
 	kp1, _ := GenerateKeypair()
 	kp2, _ := GenerateKeypair()
 
-	claim := CreateClaimWithTimestamp("test_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, "")
 	signed, _ := SignClaim(claim, kp1)
 
 	// Use different public key
@@ -187,7 +187,7 @@ func TestMetadataSizeLimit(t *testing.T) {
 		largeMetadata[i] = 'a'
 	}
 
-	claim := CreateClaimWithTimestamp("data", 1234567890, string(largeMetadata))
+	claim, _ := CreateClaimWithTimestamp("data", 1234567890, string(largeMetadata))
 
 	_, err := SignClaim(claim, kp)
 	if err == nil {

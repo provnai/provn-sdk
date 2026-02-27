@@ -17,7 +17,7 @@ use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 use core::fmt;
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use serde::{Deserialize, Serialize};
 
 /// Errors encountered during SDK operations.
@@ -101,30 +101,39 @@ impl Claim {
     }
 
     /// Create a new claim with a provided timestamp (useful for no-std)
-    pub fn new_with_timestamp(data: String, timestamp: u64) -> Self {
-        Self {
+    pub fn new_with_timestamp(data: String, timestamp: u64) -> Result<Self> {
+        if data.trim().is_empty() {
+            return Err(SdkError::ValidationError("Error: Data field cannot be empty.".to_string()));
+        }
+        
+        // Basic bounds checking for timestamp sanity (e.g., > 1970 and < 3000)
+        if timestamp < 1 || timestamp > 32503680000 {
+            return Err(SdkError::ValidationError("Error: Timestamp out of bounds.".to_string()));
+        }
+
+        Ok(Self {
             data,
             timestamp,
             metadata: None,
-        }
+        })
     }
 
     /// Canonical serialization for signing (Sorted keys, no whitespace)
     /// This follows JCS (RFC 8785) logic by relying on struct field ordering.
     pub fn to_signable_bytes(&self) -> Result<Vec<u8>> {
-        // Validation: Enforce 2KB Limit on Metadata
-        const MAX_METADATA_SIZE: usize = 2048;
-        if let Some(ref meta) = self.metadata {
-            if meta.len() > MAX_METADATA_SIZE {
-                return Err(SdkError::ValidationError(
-                    "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.".to_string()
-                ));
-            }
-        }
-
         // Enforce canonical JSON (no whitespace, sorted keys via struct order)
         let json = serde_json::to_string(self)?;
-        Ok(json.into_bytes())
+        let bytes = json.into_bytes();
+
+        // Validation: Enforce 2KB Limit on Total Signable Payload across all SDKs
+        const MAX_PAYLOAD_SIZE: usize = 2048;
+        if bytes.len() > MAX_PAYLOAD_SIZE {
+            return Err(SdkError::ValidationError(
+                "Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.".to_string()
+            ));
+        }
+
+        Ok(bytes)
     }
 }
 
@@ -192,9 +201,14 @@ pub fn verify_claim(signed_claim: &SignedClaim) -> Result<bool> {
             .map_err(|_| SdkError::KeyError("Invalid Key Length".into()))?,
     )?;
 
-    // 2. Decode Signature
+    // Decode signature
     let sig_bytes = hex::decode(&signed_claim.signature)
         .map_err(|e| SdkError::KeyError(format!("Invalid Hex Signature: {}", e)))?;
+        
+    if sig_bytes.len() != 64 {
+        return Err(SdkError::KeyError(format!("Invalid Signature Length: expected 64, got {}", sig_bytes.len())));
+    }
+
     let sig = Signature::from_bytes(
         sig_bytes
             .as_slice()
@@ -205,8 +219,9 @@ pub fn verify_claim(signed_claim: &SignedClaim) -> Result<bool> {
     // 3. Reconstruct Signable Bytes
     let msg_bytes = signed_claim.claim.to_signable_bytes()?;
 
-    // 4. Verify
-    pk.verify(&msg_bytes, &sig)?;
+    // 4. Verify in constant time to prevent timing attacks
+    let computed_signature = pk.verify_strict(&msg_bytes, &sig);
+    computed_signature.map_err(|e| SdkError::SignatureError(format!("Invalid signature: {}", e)))?;
 
     Ok(true)
 }
@@ -217,8 +232,8 @@ mod tests {
 
     #[test]
     fn test_sign_verify_flow() {
-        let key = SigningKey::from_bytes(&[0u8; 32]);
-        let claim = Claim::new_with_timestamp("Hello World".to_string(), 123456789);
+        let key = SigningKey::from_bytes(&[1u8; 32]);
+        let claim = Claim::new_with_timestamp("Hello World".to_string(), 123456789).unwrap();
 
         let signed = sign_claim(&claim, &key).expect("Sign failed");
 
@@ -241,8 +256,8 @@ mod tests {
 
     #[test]
     fn test_tamper_detection() {
-        let key = SigningKey::from_bytes(&[0u8; 32]);
-        let claim = Claim::new_with_timestamp("Sensitive Data".to_string(), 123456789);
+        let key = SigningKey::from_bytes(&[1u8; 32]);
+        let claim = Claim::new_with_timestamp("Sensitive Data".to_string(), 123456789).unwrap();
 
         let mut signed = sign_claim(&claim, &key).expect("Sign failed");
 
@@ -254,8 +269,8 @@ mod tests {
     }
 
     #[test]
-    fn test_metadata_limit() {
-        let mut claim = Claim::new_with_timestamp("Test Data".to_string(), 123456789);
+    fn test_payload_limit() {
+        let mut claim = Claim::new_with_timestamp("Test Data".to_string(), 123456789).unwrap();
         // Create metadata slightly larger than 2048 bytes
         let large_metadata = "a".repeat(2049);
         claim.metadata = Some(large_metadata);
@@ -263,9 +278,9 @@ mod tests {
         let result = claim.to_signable_bytes();
         match result {
             Err(SdkError::ValidationError(msg)) => {
-                assert_eq!(msg, "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
+                assert_eq!(msg, "Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
             }
-            _ => panic!("Expected ValidationError for metadata > 2KB"),
+            _ => panic!("Expected ValidationError for payload > 2KB"),
         }
     }
 }

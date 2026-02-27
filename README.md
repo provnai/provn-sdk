@@ -41,20 +41,21 @@ print(f"Verified: {is_valid}")
 npm install @provncloud/sdk
 ```
 ```typescript
-import { ProvnSDK } from '@provncloud/sdk';
+import { ProvnSDK, init } from '@provncloud/sdk';
 
 async function main() {
+  await init(); // Initialize WASM
   const sdk = new ProvnSDK();
   
   // 1. Generate Identity
-  const identity = await sdk.generateKeypair();
+  const identity = sdk.generateKeypair();
   
   // 2. Sign
-  const claim = await sdk.createClaim("My Critical Data");
-  const signed = await sdk.signClaim(claim, identity);
+  const claim = sdk.createClaimNow("My Critical Data");
+  const signed = sdk.signClaim(claim);
   
   // 3. Verify
-  const isValid = await sdk.verifyClaim(signed);
+  const isValid = sdk.verifyClaim(signed);
   console.log("Verified:", isValid);
 }
 main();

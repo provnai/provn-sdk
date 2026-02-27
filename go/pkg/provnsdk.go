@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	// MaxMetadataSize is the maximum size of serialized claim in bytes
-	MaxMetadataSize = 2048
+	// MaxPayloadSize is the maximum size of serialized claim in bytes
+	MaxPayloadSize = 2048
 )
 
 // SDKError represents errors from the SDK
@@ -77,12 +77,19 @@ func CreateClaim(data string, metadata string) *Claim {
 }
 
 // CreateClaimWithTimestamp creates a claim with explicit timestamp
-func CreateClaimWithTimestamp(data string, timestamp uint64, metadata string) *Claim {
+func CreateClaimWithTimestamp(data string, timestamp uint64, metadata string) (*Claim, error) {
+	if len(data) == 0 {
+		return nil, SDKError{Type: "ValidationError", Message: "Data field cannot be empty."}
+	}
+	
+	if timestamp < 1 || timestamp > 32503680000 {
+		return nil, SDKError{Type: "ValidationError", Message: "Timestamp out of bounds."}
+	}
 	return &Claim{
 		Data:      data,
 		Timestamp: timestamp,
 		Metadata:  metadata,
-	}
+	}, nil
 }
 
 // ToSignableBytes serializes claim to canonical JSON bytes
@@ -93,10 +100,10 @@ func (c *Claim) ToSignableBytes() ([]byte, error) {
 		return nil, SDKError{Type: "SerializationError", Message: err.Error()}
 	}
 
-	if len(jsonBytes) > MaxMetadataSize {
+	if len(jsonBytes) > MaxPayloadSize {
 		return nil, SDKError{
 			Type:    "ValidationError",
-			Message: "Error: Metadata too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.",
+			Message: "Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.",
 		}
 	}
 
@@ -155,7 +162,8 @@ func GetVersion() string {
 	return "0.2.0"
 }
 
-// ExportPrivateKey exports private key seed as hex string (32 bytes)
+// ExportPrivateKey exports private key seed as hex string (32 bytes).
+// WARNING: This seed must be heavily guarded. It grants full control over the identity.
 func (kp *KeyPair) ExportPrivateKey() string {
 	// Go's ed25519.PrivateKey is 64 bytes, but we only export the seed (first 32 bytes)
 	return hex.EncodeToString(kp.PrivateKey[0:32])
@@ -189,12 +197,16 @@ func ImportKeypair(privateKeyHex string, publicKeyHex string) (*KeyPair, error) 
 	}
 
 	// Go's ed25519.PrivateKey is seed (32 bytes) + public key (32 bytes)
-	fullPrivateKey := make([]byte, 64)
-	copy(fullPrivateKey[0:32], seedBytes)
-	copy(fullPrivateKey[32:64], pubBytes)
+	// We must derive the public key from the seed to ensure it matches the provided public key
+	derivedPrivateKey := ed25519.NewKeyFromSeed(seedBytes)
+	
+	// Validate that the provided public key matches the derived public key
+	if hex.EncodeToString(derivedPrivateKey.Public().(ed25519.PublicKey)) != hex.EncodeToString(pubBytes) {
+		return nil, SDKError{Type: "KeyError", Message: "Provided public key does not match seed"}
+	}
 
 	return &KeyPair{
-		PrivateKey: fullPrivateKey,
+		PrivateKey: derivedPrivateKey,
 		PublicKey:  pubBytes,
 	}, nil
 }

@@ -1,6 +1,6 @@
 [package]
 name = "provn-sdk-wasm"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "WebAssembly bindings for Provncloud SDK"
 license = "MIT"
@@ -11,8 +11,7 @@ categories = ["cryptography", "wasm"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[features]
-default = ["wee_alloc"]
+default = []
 
 [dependencies]
 provn-sdk = { path = "../rust", default-features = false, features = ["alloc", "getrandom"] }
@@ -31,7 +30,7 @@ js-sys = "=0.3.66"
 # code size when deploying.
 console_error_panic_hook = { version = "=0.1.7", optional = true }
 
-wee_alloc = { version = "=0.4.5", optional = true }
+
 
 [dependencies.web-sys]
 version = "=0.3.66"
