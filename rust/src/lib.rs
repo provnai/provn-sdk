@@ -103,12 +103,16 @@ impl Claim {
     /// Create a new claim with a provided timestamp (useful for no-std)
     pub fn new_with_timestamp(data: String, timestamp: u64) -> Result<Self> {
         if data.trim().is_empty() {
-            return Err(SdkError::ValidationError("Error: Data field cannot be empty.".to_string()));
+            return Err(SdkError::ValidationError(
+                "Error: Data field cannot be empty.".to_string(),
+            ));
         }
-        
+
         // Basic bounds checking for timestamp sanity (e.g., > 1970 and < 3000)
-        if timestamp < 1 || timestamp > 32503680000 {
-            return Err(SdkError::ValidationError("Error: Timestamp out of bounds.".to_string()));
+        if !(1..=32503680000).contains(&timestamp) {
+            return Err(SdkError::ValidationError(
+                "Error: Timestamp out of bounds.".to_string(),
+            ));
         }
 
         Ok(Self {
@@ -204,9 +208,12 @@ pub fn verify_claim(signed_claim: &SignedClaim) -> Result<bool> {
     // Decode signature
     let sig_bytes = hex::decode(&signed_claim.signature)
         .map_err(|e| SdkError::KeyError(format!("Invalid Hex Signature: {}", e)))?;
-        
+
     if sig_bytes.len() != 64 {
-        return Err(SdkError::KeyError(format!("Invalid Signature Length: expected 64, got {}", sig_bytes.len())));
+        return Err(SdkError::KeyError(format!(
+            "Invalid Signature Length: expected 64, got {}",
+            sig_bytes.len()
+        )));
     }
 
     let sig = Signature::from_bytes(
@@ -221,7 +228,8 @@ pub fn verify_claim(signed_claim: &SignedClaim) -> Result<bool> {
 
     // 4. Verify in constant time to prevent timing attacks
     let computed_signature = pk.verify_strict(&msg_bytes, &sig);
-    computed_signature.map_err(|e| SdkError::SignatureError(format!("Invalid signature: {}", e)))?;
+    computed_signature
+        .map_err(|e| SdkError::SignatureError(format!("Invalid signature: {}", e)))?;
 
     Ok(true)
 }

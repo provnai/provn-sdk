@@ -42,4 +42,4 @@ jobs:
       - name: Build and Install SDK
         run: maturin develop
       - name: Run tests
-        run: python test_sdk_verify.py
+        run: pytest -v
