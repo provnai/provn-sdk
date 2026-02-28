@@ -27,19 +27,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           default: true
-      - name: Install Maturin
-        run: pip install maturin pytest
+      - name: Install dependencies
+        run: pip install pytest maturin
       - name: Build and Install SDK
-        run: maturin develop
+        run: pip install .
       - name: Run tests
         run: pytest -v
