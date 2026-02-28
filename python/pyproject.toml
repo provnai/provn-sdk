@@ -4,16 +4,27 @@ build-backend = "maturin"
 
 [project]
 name = "provn-sdk"
-version = "0.3.0"
-description = "Provncloud SDK for Python - Privacy-preserving digital signatures"
+version = "0.3.2"
+description = "Official Python SDK for privacy-preserving digital signatures and data anchoring"
 readme = "README.md"
 authors = [{name = "Provncloud", email = "dev@provn.ai"}]
 license = {text = "MIT"}
+
 classifiers = [
     "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+
+[project.urls]
+Homepage = "https://github.com/provnai/provn-sdk"
+Repository = "https://github.com/provnai/provn-sdk.git"
+Issues = "https://github.com/provnai/provn-sdk/issues"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]

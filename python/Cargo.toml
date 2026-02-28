@@ -1,9 +1,12 @@
 [package]
 name = "provn-sdk-python"
-version = "0.3.0"
+version = "0.3.2"
 edition = "2021"
 description = "Python bindings for Provncloud SDK"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/provnai/provn-sdk"
+homepage = "https://github.com/provnai/provn-sdk"
 
 [lib]
 name = "provn_sdk"
