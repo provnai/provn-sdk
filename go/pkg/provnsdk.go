@@ -81,7 +81,7 @@ func CreateClaimWithTimestamp(data string, timestamp uint64, metadata string) (*
 	if len(data) == 0 {
 		return nil, SDKError{Type: "ValidationError", Message: "Data field cannot be empty."}
 	}
-	
+
 	if timestamp < 1 || timestamp > 32503680000 {
 		return nil, SDKError{Type: "ValidationError", Message: "Timestamp out of bounds."}
 	}
@@ -199,7 +199,7 @@ func ImportKeypair(privateKeyHex string, publicKeyHex string) (*KeyPair, error) 
 	// Go's ed25519.PrivateKey is seed (32 bytes) + public key (32 bytes)
 	// We must derive the public key from the seed to ensure it matches the provided public key
 	derivedPrivateKey := ed25519.NewKeyFromSeed(seedBytes)
-	
+
 	// Validate that the provided public key matches the derived public key
 	if hex.EncodeToString(derivedPrivateKey.Public().(ed25519.PublicKey)) != hex.EncodeToString(pubBytes) {
 		return nil, SDKError{Type: "KeyError", Message: "Provided public key does not match seed"}
