@@ -161,13 +161,28 @@ export function signClaim(claim: Claim, keyPair: KeyPair): SignedClaim {
 }
 
 /**
+ * Error thrown when verification input is malformed (VULN-006).
+ * Distinct from a clean cryptographic failure (which returns false).
+ */
+export class VerificationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'VerificationError';
+  }
+}
+
+/**
  * Verify a signed claim
  * 
  * @param signedClaim - SignedClaim to verify
- * @returns true if valid, false otherwise
+ * @returns true if cryptographically valid, false if signature doesn't match
+ * @throws VerificationError if the input is malformed (bad hex, missing fields, etc.)
  */
 export function verifyClaim(signedClaim: SignedClaim): boolean {
   ensureInitialized();
+  if (!signedClaim.claim || !signedClaim.public_key || !signedClaim.signature) {
+    throw new VerificationError('Missing required fields: claim, public_key, signature');
+  }
   const json = JSON.stringify({
     claim: signedClaim.claim,
     public_key: signedClaim.public_key,
@@ -176,8 +191,9 @@ export function verifyClaim(signedClaim: SignedClaim): boolean {
   try {
     return wasm_verify_claim(json);
   } catch (error) {
-    console.error("Verification error:", error);
-    return false;
+    // Re-throw as VerificationError so callers can distinguish input errors
+    // from a successful-but-invalid signature check (which returns false).
+    throw new VerificationError(`Verification failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

@@ -208,7 +208,7 @@ public class ProvnSDK {
      * Get SDK version
      */
     public static String getVersion() {
-        return "0.2.0";
+        return "0.3.0";  // VULN-007 fix: updated from "0.2.0"
     }
     
     /**

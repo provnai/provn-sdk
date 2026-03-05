@@ -1,11 +1,10 @@
 # Provncloud SDK
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/Rust-2021-blue.svg)](https://www.rust-lang.org/)
-[![Crates.io](https://img.shields.io/crates/v/provn-sdk)](https://crates.io/crates/provn-sdk)
-[![NPM](https://img.shields.io/badge/NPM-%40provncloud%2Fsdk-red.svg)](https://www.npmjs.com/package/@provncloud/sdk)
-[![PyPI](https://img.shields.io/badge/PyPI-provn--sdk-yellow.svg)](https://pypi.org/project/provn-sdk/)
-[![Go](https://img.shields.io/badge/Go-Reference-blue.svg)](https://pkg.go.dev/github.com/provnai/provn-sdk/go)
+[![Rust](https://img.shields.io/crates/v/provn-sdk?label=Rust%20%28crates.io%29&color=orange)](https://crates.io/crates/provn-sdk)
+[![NPM](https://img.shields.io/npm/v/%40provncloud%2Fsdk?label=NPM&color=red)](https://www.npmjs.com/package/@provncloud/sdk)
+[![PyPI](https://img.shields.io/pypi/v/provn-sdk?label=PyPI&color=yellow)](https://pypi.org/project/provn-sdk/)
+[![Go](https://img.shields.io/github/v/tag/provnai/provn-sdk?label=Go&color=blue)](https://pkg.go.dev/github.com/provnai/provn-sdk/go)
 
 **The standard for privacy-preserving digital signatures and data anchoring.**
 Provncloud SDK allows you to cryptographically sign data and anchor it to Arweave AO and Solana without revealing the raw content.

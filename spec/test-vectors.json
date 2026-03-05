@@ -1,7 +1,8 @@
 {
-  "_warning": "⚠️  SECURITY NOTICE: These are TEST private keys for cross-SDK verification only. They are randomly generated and should NEVER be used in production!",
+  "_warning": "🚨 THESE ARE TEST-ONLY KEYS — NOT FOR PRODUCTION USE 🚨  These key pairs are publicly known (committed to a public repo). Anyone who uses these keys has zero cryptographic security. They exist solely to verify cross-SDK interoperability against known outputs.",
+  "_security_notice": "Real keys must be generated at runtime with generate_keypair(). Never commit real private keys to source control.",
   "generated_at": "2024-01-01T00:00:00Z",
-  "sdk_version": "0.2.0",
+  "sdk_version": "0.3.0",
   "spec_version": "1.0",
   "test_vectors": [
     {
