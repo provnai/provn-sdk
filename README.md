@@ -7,7 +7,7 @@
 [![Go](https://img.shields.io/github/v/tag/provnai/provn-sdk?label=Go&color=blue)](https://pkg.go.dev/github.com/provnai/provn-sdk/go)
 
 **The standard for privacy-preserving digital signatures and data anchoring.**
-Provncloud SDK allows you to cryptographically sign data and anchor it to Arweave AO and Solana without revealing the raw content.
+Provncloud SDK allows you to cryptographically sign data and anchor it to Solana without revealing the raw content.
 
 ---
 
@@ -115,7 +115,6 @@ func main() {
 
 ## 🔗 Ecosystem
 - [Provncloud](https://provncloud.com/)
-- [Arweave AO](https://ao.arweave.dev)
 - [Solana](https://solana.com)
 
 ## ⚖️ License
