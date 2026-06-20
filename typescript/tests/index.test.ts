@@ -2,8 +2,6 @@
  * Provncloud SDK TypeScript Tests
  */
 
-jest.mock('../wasm/provn_sdk_wasm.js', () => require('./__mocks__/provn_sdk_wasm.js'));
-
 import {
   generateKeypair,
   computeHash,
@@ -27,8 +25,7 @@ describe('ProvnSDK', () => {
       }
       if (
         signed.claim?.data === 'tampered_data' ||
-        signed.public_key !== 'b'.repeat(64) ||
-        signed.signature !== 'c'.repeat(128)
+        signed.signature !== signed.public_key.repeat(2)
       ) {
         throw new Error('Invalid signature');
       }

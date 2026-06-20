@@ -107,7 +107,8 @@ fn test_metadata_at_2kb_limit() {
 fn test_metadata_exceeds_2kb_limit() {
     let keypair = generate_keypair();
 
-    let claim = Claim::new_with_timestamp("data".to_string(), 1234567890, Some("a".repeat(3000))).unwrap();
+    let claim =
+        Claim::new_with_timestamp("data".to_string(), 1234567890, Some("a".repeat(3000))).unwrap();
 
     let result = sign_claim(&claim, &keypair);
     assert!(result.is_err());

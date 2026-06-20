@@ -11,6 +11,7 @@ Usage:
 
 import io
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
@@ -24,6 +25,25 @@ def run_cmd(cmd, cwd=None):
     """Run a shell command and fail fast if it errors."""
     print(f"Running: {cmd} (in {cwd or '.'})")
     subprocess.check_call(cmd, shell=True, cwd=cwd)
+
+
+def build_and_install_python_wheel(py_dir):
+    """Build a wheel for the active interpreter and install it."""
+    wheels_dir = pathlib.Path(py_dir) / "target" / "wheels"
+    if wheels_dir.exists():
+        shutil.rmtree(wheels_dir)
+
+    run_cmd(f'maturin build --release --interpreter "{sys.executable}"', cwd=py_dir)
+
+    wheels = sorted(wheels_dir.glob("*.whl"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not wheels:
+        raise RuntimeError(f"No wheels found in {wheels_dir}")
+
+    wheel_path = wheels[0]
+    run_cmd(
+        f'"{sys.executable}" -m pip install --force-reinstall "{wheel_path}"',
+        cwd=py_dir,
+    )
 
 
 def build_rust():
@@ -50,7 +70,7 @@ def build_python():
     print("\nBuilding Python SDK...")
     py_dir = os.path.join(ROOT_DIR, "python")
     run_cmd(f'"{sys.executable}" -m pip install maturin', cwd=py_dir)
-    run_cmd("maturin develop --release", cwd=py_dir)
+    build_and_install_python_wheel(py_dir)
 
 
 def build_go():
@@ -77,8 +97,9 @@ def test():
     run_cmd("npm test", cwd=os.path.join(ROOT_DIR, "typescript"))
 
     print(">> Python Tests")
-    run_cmd("maturin develop --release", cwd=os.path.join(ROOT_DIR, "python"))
-    run_cmd(f'"{sys.executable}" -m pytest tests/ -v', cwd=os.path.join(ROOT_DIR, "python"))
+    py_dir = os.path.join(ROOT_DIR, "python")
+    build_and_install_python_wheel(py_dir)
+    run_cmd(f'"{sys.executable}" -m pytest tests/ -v', cwd=py_dir)
 
     print(">> Go Tests")
     run_cmd("go test ./...", cwd=os.path.join(ROOT_DIR, "go"))

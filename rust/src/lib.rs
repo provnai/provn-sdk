@@ -101,7 +101,11 @@ impl Claim {
     }
 
     /// Create a new claim with a provided timestamp (useful for no-std)
-    pub fn new_with_timestamp(data: String, timestamp: u64, metadata: Option<String>) -> Result<Self> {
+    pub fn new_with_timestamp(
+        data: String,
+        timestamp: u64,
+        metadata: Option<String>,
+    ) -> Result<Self> {
         if data.trim().is_empty() {
             return Err(SdkError::ValidationError(
                 "Error: Data field cannot be empty.".to_string(),
@@ -265,7 +269,8 @@ mod tests {
     #[test]
     fn test_tamper_detection() {
         let key = SigningKey::from_bytes(&[1u8; 32]);
-        let claim = Claim::new_with_timestamp("Sensitive Data".to_string(), 123456789, None).unwrap();
+        let claim =
+            Claim::new_with_timestamp("Sensitive Data".to_string(), 123456789, None).unwrap();
 
         let mut signed = sign_claim(&claim, &key).expect("Sign failed");
 
@@ -278,7 +283,8 @@ mod tests {
 
     #[test]
     fn test_payload_limit() {
-        let mut claim = Claim::new_with_timestamp("Test Data".to_string(), 123456789, None).unwrap();
+        let mut claim =
+            Claim::new_with_timestamp("Test Data".to_string(), 123456789, None).unwrap();
         // Create metadata slightly larger than 2048 bytes
         let large_metadata = "a".repeat(2049);
         claim.metadata = Some(large_metadata);
