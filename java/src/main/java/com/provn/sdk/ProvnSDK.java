@@ -30,20 +30,24 @@ public class ProvnSDK {
     private static final ObjectMapper mapper = new ObjectMapper()
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-            .disable(SerializationFeature.INDENT_OUTPUT);
+            .disable(SerializationFeature.INDENT_OUTPUT)
+            .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
     
     /**
      * Claim representing a statement of truth
      */
     @JsonPropertyOrder({"data", "metadata", "timestamp"})
     public static class Claim {
-        public String data;
-        public String metadata;
-        public long timestamp;
+        public final String data;
+        public final String metadata;
+        public final long timestamp;
         
-        public Claim() {}
-        
-        public Claim(String data, long timestamp, String metadata) {
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public Claim(
+            @com.fasterxml.jackson.annotation.JsonProperty("data") String data,
+            @com.fasterxml.jackson.annotation.JsonProperty("timestamp") long timestamp,
+            @com.fasterxml.jackson.annotation.JsonProperty("metadata") String metadata
+        ) {
             this.data = data;
             this.timestamp = timestamp;
             this.metadata = metadata;
@@ -55,15 +59,18 @@ public class ProvnSDK {
      */
     public static class SignedClaim {
         @JsonProperty("claim")
-        public Claim claim;
+        public final Claim claim;
         @JsonProperty("public_key")
-        public String publicKey;
+        public final String publicKey;
         @JsonProperty("signature")
-        public String signature;
+        public final String signature;
         
-        public SignedClaim() {}
-        
-        public SignedClaim(Claim claim, String publicKey, String signature) {
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public SignedClaim(
+            @com.fasterxml.jackson.annotation.JsonProperty("claim") Claim claim,
+            @com.fasterxml.jackson.annotation.JsonProperty("public_key") String publicKey,
+            @com.fasterxml.jackson.annotation.JsonProperty("signature") String signature
+        ) {
             this.claim = claim;
             this.publicKey = publicKey;
             this.signature = signature;
@@ -208,7 +215,7 @@ public class ProvnSDK {
      * Get SDK version
      */
     public static String getVersion() {
-        return "0.3.0";  // VULN-007 fix: updated from "0.2.0"
+        return "0.3.3";  // Keep in sync with pom.xml
     }
     
     /**

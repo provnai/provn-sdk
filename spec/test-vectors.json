@@ -2,7 +2,7 @@
   "_warning": "🚨 THESE ARE TEST-ONLY KEYS — NOT FOR PRODUCTION USE 🚨  These key pairs are publicly known (committed to a public repo). Anyone who uses these keys has zero cryptographic security. They exist solely to verify cross-SDK interoperability against known outputs.",
   "_security_notice": "Real keys must be generated at runtime with generate_keypair(). Never commit real private keys to source control.",
   "generated_at": "2024-01-01T00:00:00Z",
-  "sdk_version": "0.3.0",
+  "sdk_version": "0.3.3",
   "spec_version": "1.0",
   "test_vectors": [
     {
@@ -70,6 +70,43 @@
           "signer": "key_b"
         }
       ]
+    },
+    {
+      "name": "claim_html_chars",
+      "description": "Claim with HTML characters in data field to catch JSON escaping bugs",
+      "private_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "public_key": "e734ea6c2b6257de72355e472aa05a4c487e6b463c029ed306df2f01b5636b58",
+      "claim": {
+        "data": "a<b>&c",
+        "timestamp": 1704067200
+      },
+      "canonical_json": "{\"data\":\"a<b>&c\",\"timestamp\":1704067200}",
+      "expected_signature": "bf3ed00b5bcac7f924a51e8615906538b32a3e028c843755133ea58c92af711e231d6a06840657bd47793d0cb689023754e6868ef4919dc51661b985106a070c"
+    },
+    {
+      "name": "claim_empty_metadata",
+      "description": "Claim with explicitly empty metadata string to catch omitempty bugs",
+      "private_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "public_key": "7d59c5623dd40a74aa4d5a32ac645d3b3f95daeae4c22be25476dd6a486f7382",
+      "claim": {
+        "data": "test_empty_meta",
+        "timestamp": 1704067200,
+        "metadata": ""
+      },
+      "canonical_json": "{\"data\":\"test_empty_meta\",\"metadata\":\"\",\"timestamp\":1704067200}",
+      "expected_signature": "f9d7d6ae76846f825a46049322978b4b49ead5ebef9574ebc5a63abc26c7e415eb2eea1ff1bb2b692cd7a25c2786bc344ba08853db17c5428d00c664aa195708"
+    },
+    {
+      "name": "claim_unicode",
+      "description": "Claim with non-ASCII unicode data to verify UTF-8 handling",
+      "private_key": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "public_key": "ca57eed30e4a7274ef4c648f56f58f880b20d2ca25725d9e5c13c83c08c09aeb",
+      "claim": {
+        "data": "日本語",
+        "timestamp": 1704067200
+      },
+      "canonical_json": "{\"data\":\"日本語\",\"timestamp\":1704067200}",
+      "expected_signature": "589b31a7c6079d782bbdf966ab5f504bde84bb180ace1e3bcdbdc62304fd0574eb8ef4f1e1ac663fff5082b883633913c9a9f58388a734c1f4241489b895280c"
     }
   ]
 }

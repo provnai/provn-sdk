@@ -1,6 +1,6 @@
 [package]
 name = "provn-sdk"
-version = "0.3.0"
+version = "0.3.3"
 edition = "2021"
 description = "Universal, no-std Rust SDK for privacy-preserving digital signatures and data anchoring."
 license = "MIT"

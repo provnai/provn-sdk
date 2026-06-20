@@ -4,59 +4,47 @@
 [![Docs.rs](https://docs.rs/provn-sdk/badge.svg)](https://docs.rs/provn-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 
-**Universal, no-std Rust SDK for privacy-preserving digital signatures and data anchoring.**
+Reference Rust implementation for deterministic claim serialization, Ed25519 signing, SHA-256 hashing, and offline verification.
 
-Provncloud SDK allows you to cryptographically sign data and anchor it to blockchain networks (like Arweave AO and Solana) without revealing the raw content. It strictly adheres to [JCS (RFC 8785)](https://rfc-editor.org/rfc/rfc8785) for canonical JSON serialization, ensuring signatures verified in Rust can be validated across any other supported language.
-
-## 🚀 Installation
-
-Add to your `Cargo.toml`:
+## Installation
 
 ```toml
 [dependencies]
-provn-sdk = "0.3.0"
+provn-sdk = "0.3.3"
 ```
 
-For `no_std` environments (e.g., Solana programs):
+For `no_std` environments:
 
 ```toml
 [dependencies]
-provn-sdk = { version = "0.3.0", default-features = false, features = ["alloc"] }
+provn-sdk = { version = "0.3.3", default-features = false, features = ["alloc"] }
 ```
 
-## 💻 Usage
+## Usage
 
 ```rust
-use provn_sdk::{Claim, sign_claim, verify_claim, generate_keypair};
+use provn_sdk::{generate_keypair, sign_claim, verify_claim, Claim};
 
 fn main() {
-    // 1. Generate a new Ed25519 keypair
     let key = generate_keypair();
+    let claim = Claim::new("AI Model Accuracy: 99.2%".to_string(), None);
+    let signed = sign_claim(&claim, &key).expect("signing failed");
 
-    // 2. Create a claim with the data you want to anchor
-    let claim = Claim::new("AI Model Accuracy: 99.2%".to_string());
-
-    // 3. Sign the claim
-    let signed = sign_claim(&claim, &key).expect("Signing failed");
-
-    // 4. Verify the claim (Offline)
-    let is_valid = verify_claim(&signed).expect("Verification failed");
-    println!("Signature valid: {}", is_valid);
+    println!("{}", verify_claim(&signed).expect("verification failed"));
 }
 ```
 
-## 🛠 Features
+## Notes
 
-- **Standard Compliance**: Uses JCS (RFC 8785) for deterministic JSON serialization.
-- **no-std Support**: Fully compatible with embedded and blockchain runtimes.
-- **Cross-Language**: Signatures are interoperable with Provn SDKs in Python, JS/TS, Go, and Java.
-- **Safety**: Robust validation of payload sizes (2KB limit) and timestamp bounds.
+- Payloads are capped at 2 KB after canonical JSON serialization.
+- `Claim::new_with_timestamp` validates both timestamp bounds and empty data.
+- This crate is the behavioral reference for the other SDKs in the monorepo.
 
-## 📚 Resources
+## Resources
 
-- [**Monorepo & Examples**](https://github.com/provnai/provn-sdk)
-- [**Protocol Spec**](https://github.com/provnai/provn-sdk/blob/main/spec/SPEC.md)
+- [Monorepo](https://github.com/provnai/provn-sdk)
+- [Protocol Spec](https://github.com/provnai/provn-sdk/blob/main/spec/SPEC.md)
 
-## ⚖️ License
+## License
 
-MIT License. See [LICENSE](https://github.com/provnai/provn-sdk/blob/main/LICENSE) for details.
+MIT

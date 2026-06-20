@@ -2,6 +2,8 @@
  * Provncloud SDK TypeScript Tests
  */
 
+jest.mock('../wasm/provn_sdk_wasm.js', () => require('./__mocks__/provn_sdk_wasm.js'));
+
 import {
   generateKeypair,
   computeHash,
@@ -11,9 +13,31 @@ import {
   createClaimNow,
   getVersion,
   ProvnSDK,
+  VerificationError,
 } from '../src/index';
+import { wasm_verify_claim, wasm_version } from '../wasm/provn_sdk_wasm.js';
 
 describe('ProvnSDK', () => {
+  beforeEach(() => {
+    (wasm_verify_claim as jest.Mock).mockReset();
+    (wasm_verify_claim as jest.Mock).mockImplementation((signedClaimJson: string) => {
+      const signed = JSON.parse(signedClaimJson);
+      if (signed.public_key === 'malformed') {
+        throw new Error('Malformed payload');
+      }
+      if (
+        signed.claim?.data === 'tampered_data' ||
+        signed.public_key !== 'b'.repeat(64) ||
+        signed.signature !== 'c'.repeat(128)
+      ) {
+        throw new Error('Invalid signature');
+      }
+      return true;
+    });
+    (wasm_version as jest.Mock).mockReset();
+    (wasm_version as jest.Mock).mockImplementation(() => '0.3.3');
+  });
+
   describe('generateKeypair', () => {
     it('should generate a valid keypair', () => {
       const keypair = generateKeypair();
@@ -141,6 +165,23 @@ describe('ProvnSDK', () => {
       const isValid = verifyClaim(signed);
       expect(isValid).toBe(false);
     });
+
+    it('should throw VerificationError for malformed input before WASM', () => {
+      expect(() => verifyClaim({
+        claim: undefined as never,
+        public_key: 'a'.repeat(64),
+        signature: 'b'.repeat(128),
+      })).toThrow(VerificationError);
+    });
+
+    it('should throw VerificationError for malformed WASM errors', () => {
+      const keypair = generateKeypair();
+      const claim = createClaim('data', 1234567890);
+      const signed = signClaim(claim, keypair);
+      signed.public_key = 'malformed';
+
+      expect(() => verifyClaim(signed)).toThrow(VerificationError);
+    });
   });
 
   describe('getVersion', () => {
@@ -148,7 +189,7 @@ describe('ProvnSDK', () => {
       const version = getVersion();
 
       expect(typeof version).toBe('string');
-      expect(version).toMatch(/^\d+\.\d+\.\d+/);
+      expect(version).toBe('0.3.3');
     });
   });
 

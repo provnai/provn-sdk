@@ -5,11 +5,13 @@ on:
     branches: [ main ]
     paths:
       - 'typescript/**'
+      - 'rust-wasm/**'
       - 'spec/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'typescript/**'
+      - 'rust-wasm/**'
       - 'spec/**'
 
 jobs:
@@ -47,10 +49,10 @@ jobs:
         run: npm run build
       - name: Run tests
         working-directory: ./typescript
-        run: npm test || true  # Tests may fail without proper WASM setup
+        run: npm test
       - name: Lint
         working-directory: ./typescript
-        run: npm run lint || true
+        run: npm run lint
 
   typecheck:
     name: Type Check

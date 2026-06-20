@@ -107,11 +107,9 @@ pub fn wasm_create_claim(data: &str, metadata: Option<String>) -> Result<String,
     // Get current timestamp from JS safely without fp64 precision loss
     let timestamp = (js_sys::Math::trunc(js_sys::Date::now() / 1000.0)) as u64;
 
-    let claim = Claim {
-        data: data.to_string(),
-        timestamp,
-        metadata,
-    };
+    // Use the validated constructor to enforce data/timestamp rules
+    let claim = Claim::new_with_timestamp(data.to_string(), timestamp, metadata)
+        .map_err(|e| JsValue::from_str(&format!("Validation failed: {}", e)))?;
 
     serde_json::to_string(&claim)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize claim: {}", e)))
@@ -124,11 +122,10 @@ pub fn wasm_create_claim_with_timestamp(
     timestamp: u64,
     metadata: Option<String>,
 ) -> Result<String, JsValue> {
-    let claim = Claim {
-        data: data.to_string(),
-        timestamp,
-        metadata,
-    };
+    // Use the validated constructor to enforce data/timestamp rules.
+    // Previously this used a raw struct literal which bypassed all validation.
+    let claim = Claim::new_with_timestamp(data.to_string(), timestamp, metadata)
+        .map_err(|e| JsValue::from_str(&format!("Validation failed: {}", e)))?;
 
     serde_json::to_string(&claim)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize claim: {}", e)))

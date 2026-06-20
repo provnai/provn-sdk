@@ -89,19 +89,19 @@ pub struct SignedClaim {
 impl Claim {
     /// Create a new claim with the current system time (requires "std")
     #[cfg(feature = "std")]
-    pub fn new(data: String) -> Self {
+    pub fn new(data: String, metadata: Option<String>) -> Self {
         Self {
             data,
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
-            metadata: None,
+            metadata,
         }
     }
 
     /// Create a new claim with a provided timestamp (useful for no-std)
-    pub fn new_with_timestamp(data: String, timestamp: u64) -> Result<Self> {
+    pub fn new_with_timestamp(data: String, timestamp: u64, metadata: Option<String>) -> Result<Self> {
         if data.trim().is_empty() {
             return Err(SdkError::ValidationError(
                 "Error: Data field cannot be empty.".to_string(),
@@ -118,7 +118,7 @@ impl Claim {
         Ok(Self {
             data,
             timestamp,
-            metadata: None,
+            metadata,
         })
     }
 
@@ -170,7 +170,7 @@ pub fn generate_keypair() -> SigningKey {
 /// ```
 /// use provn_sdk::{Claim, sign_claim, generate_keypair};
 /// let key = generate_keypair();
-/// let claim = Claim::new("Test Claim".to_string());
+/// let claim = Claim::new("Test Claim".to_string(), None);
 /// let signed = sign_claim(&claim, &key).unwrap();
 /// ```
 pub fn sign_claim(claim: &Claim, key: &SigningKey) -> Result<SignedClaim> {
@@ -190,7 +190,7 @@ pub fn sign_claim(claim: &Claim, key: &SigningKey) -> Result<SignedClaim> {
 /// ```
 /// use provn_sdk::{Claim, sign_claim, verify_claim, generate_keypair};
 /// let key = generate_keypair();
-/// let claim = Claim::new("Test Claim".to_string());
+/// let claim = Claim::new("Test Claim".to_string(), None);
 /// let signed = sign_claim(&claim, &key).unwrap();
 /// assert!(verify_claim(&signed).unwrap());
 /// ```
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn test_sign_verify_flow() {
         let key = SigningKey::from_bytes(&[1u8; 32]);
-        let claim = Claim::new_with_timestamp("Hello World".to_string(), 123456789).unwrap();
+        let claim = Claim::new_with_timestamp("Hello World".to_string(), 123456789, None).unwrap();
 
         let signed = sign_claim(&claim, &key).expect("Sign failed");
 
@@ -265,7 +265,7 @@ mod tests {
     #[test]
     fn test_tamper_detection() {
         let key = SigningKey::from_bytes(&[1u8; 32]);
-        let claim = Claim::new_with_timestamp("Sensitive Data".to_string(), 123456789).unwrap();
+        let claim = Claim::new_with_timestamp("Sensitive Data".to_string(), 123456789, None).unwrap();
 
         let mut signed = sign_claim(&claim, &key).expect("Sign failed");
 
@@ -278,7 +278,7 @@ mod tests {
 
     #[test]
     fn test_payload_limit() {
-        let mut claim = Claim::new_with_timestamp("Test Data".to_string(), 123456789).unwrap();
+        let mut claim = Claim::new_with_timestamp("Test Data".to_string(), 123456789, None).unwrap();
         // Create metadata slightly larger than 2048 bytes
         let large_metadata = "a".repeat(2049);
         claim.metadata = Some(large_metadata);

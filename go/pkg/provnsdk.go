@@ -5,11 +5,13 @@
 package provnsdk
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -30,9 +32,12 @@ func (e SDKError) Error() string {
 
 // Claim represents a statement of truth to be anchored
 type Claim struct {
-	Data      string `json:"data"`
-	Metadata  string `json:"metadata,omitempty"`
-	Timestamp uint64 `json:"timestamp"`
+	Data string `json:"data"`
+	// Metadata uses a pointer so that nil (absent) and "" (empty string) are
+	// distinct values. This is required for strict JCS (RFC 8785) compliance:
+	// omitting a field vs. serializing an empty string are different payloads.
+	Metadata  *string `json:"metadata,omitempty"`
+	Timestamp uint64  `json:"timestamp"`
 }
 
 // SignedClaim wraps a Claim with cryptographic proof
@@ -67,17 +72,31 @@ func ComputeHash(data []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-// CreateClaim creates a claim with current timestamp
+// CreateClaim creates a claim with current timestamp.
+// The provided metadata is preserved exactly, including the empty string.
+// Use CreateClaimWithoutMetadata or CreateClaimWithTimestamp(..., nil)
+// when you want the metadata field omitted entirely.
 func CreateClaim(data string, metadata string) *Claim {
 	return &Claim{
 		Data:      data,
 		Timestamp: uint64(time.Now().Unix()),
-		Metadata:  metadata,
+		Metadata:  &metadata,
 	}
 }
 
-// CreateClaimWithTimestamp creates a claim with explicit timestamp
-func CreateClaimWithTimestamp(data string, timestamp uint64, metadata string) (*Claim, error) {
+// CreateClaimWithoutMetadata creates a claim whose metadata field is omitted.
+func CreateClaimWithoutMetadata(data string) *Claim {
+	return &Claim{
+		Data:      data,
+		Timestamp: uint64(time.Now().Unix()),
+		Metadata:  nil,
+	}
+}
+
+// CreateClaimWithTimestamp creates a claim with explicit timestamp.
+// Pass a non-nil *string for metadata to include the field in the payload.
+// Pass nil to omit it entirely.
+func CreateClaimWithTimestamp(data string, timestamp uint64, metadata *string) (*Claim, error) {
 	if len(data) == 0 {
 		return nil, SDKError{Type: "ValidationError", Message: "Data field cannot be empty."}
 	}
@@ -92,13 +111,21 @@ func CreateClaimWithTimestamp(data string, timestamp uint64, metadata string) (*
 	}, nil
 }
 
-// ToSignableBytes serializes claim to canonical JSON bytes
+// ToSignableBytes serializes claim to canonical JSON bytes.
+//
+// IMPORTANT: Uses SetEscapeHTML(false) to prevent Go's default HTML
+// character escaping (<, >, &) from producing different bytes than
+// other SDK implementations (Rust, Python, Java), which is required
+// for cross-language signature interoperability.
 func (c *Claim) ToSignableBytes() ([]byte, error) {
-	// Check metadata size limit
-	jsonBytes, err := json.Marshal(c)
-	if err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(c); err != nil {
 		return nil, SDKError{Type: "SerializationError", Message: err.Error()}
 	}
+	// json.Encoder.Encode appends a newline; trim it for exact byte parity.
+	jsonBytes := bytes.TrimRight(buf.Bytes(), "\n")
 
 	if len(jsonBytes) > MaxPayloadSize {
 		return nil, SDKError{
@@ -159,7 +186,7 @@ func VerifyClaim(signedClaim *SignedClaim) (bool, error) {
 
 // GetVersion returns the SDK version
 func GetVersion() string {
-	return "0.2.0"
+	return "0.3.3"
 }
 
 // ExportPrivateKey exports private key seed as hex string (32 bytes).
@@ -209,4 +236,23 @@ func ImportKeypair(privateKeyHex string, publicKeyHex string) (*KeyPair, error) 
 		PrivateKey: derivedPrivateKey,
 		PublicKey:  pubBytes,
 	}, nil
+}
+
+// ParseSignedClaimStrict deserializes a JSON string into a SignedClaim,
+// returning an error if any unknown fields are present in the input.
+//
+// Use this function when accepting SignedClaim objects from untrusted sources
+// (APIs, user input, blockchains). Using json.Unmarshal directly will
+// silently ignore unknown fields.
+func ParseSignedClaimStrict(jsonStr string) (*SignedClaim, error) {
+	var signed SignedClaim
+	dec := json.NewDecoder(strings.NewReader(jsonStr))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&signed); err != nil {
+		return nil, SDKError{
+			Type:    "SerializationError",
+			Message: fmt.Sprintf("Invalid or unknown fields in SignedClaim JSON: %v", err),
+		}
+	}
+	return &signed, nil
 }

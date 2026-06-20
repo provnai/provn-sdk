@@ -20,7 +20,7 @@ fn main() {
     let sensitive_data = b"Internal Audit Memo: #1234 - High Priority Security Patch applied.";
     let asset_hash = provn_sdk::compute_hash(sensitive_data);
 
-    let claim = Claim::new(asset_hash.clone());
+    let claim = Claim::new(asset_hash.clone(), None);
     println!("[2] Prepared Claim (Asset Hash): \"{}\"", asset_hash);
 
     // 3. SECURE SIGNING: Sign the claim locally

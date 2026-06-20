@@ -121,11 +121,6 @@ export function createClaim(
 
   const jsonString = wasm_create_claim_with_timestamp(data, BigInt(timestamp), metadata || undefined);
 
-  const encoder = new TextEncoder();
-  if (encoder.encode(jsonString).length > 2048) {
-    throw new Error("Error: Payload too large. Tip: For large datasets, hash the file locally and anchor the hash instead of the raw data.");
-  }
-
   return JSON.parse(jsonString);
 }
 
@@ -191,9 +186,19 @@ export function verifyClaim(signedClaim: SignedClaim): boolean {
   try {
     return wasm_verify_claim(json);
   } catch (error) {
-    // Re-throw as VerificationError so callers can distinguish input errors
-    // from a successful-but-invalid signature check (which returns false).
-    throw new VerificationError(`Verification failed: ${error instanceof Error ? error.message : String(error)}`);
+    const msg = error instanceof Error ? error.message : String(error);
+    // The WASM layer throws for both structural errors and cryptographic failures.
+    // Cryptographic failures (invalid sig, wrong key) must return false to match
+    // the contract of all other SDK implementations (Rust, Go, Java, Python).
+    // Only truly malformed input (bad hex, missing fields) should throw.
+    const isCryptoFailure = msg.includes('signature error') ||
+      msg.includes('Invalid signature') ||
+      msg.includes('invalid signature');
+    if (isCryptoFailure) {
+      return false;
+    }
+    // Structural/malformed input — throw so the caller knows it was their fault.
+    throw new VerificationError(`Verification failed: ${msg}`);
   }
 }
 

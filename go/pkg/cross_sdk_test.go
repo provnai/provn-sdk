@@ -42,6 +42,55 @@ type SignatureInfo struct {
 	Signature  string `json:"signature"`
 }
 
+func verifyDeterministicVector(t *testing.T, vector TestVector) {
+	t.Helper()
+
+	if vector.Claim == nil {
+		t.Fatal("Claim is nil")
+	}
+
+	canonicalBytes, err := vector.Claim.ToSignableBytes()
+	if err != nil {
+		t.Fatalf("Failed to get signable bytes for %s: %v", vector.Name, err)
+	}
+
+	if string(canonicalBytes) != vector.CanonicalJSON {
+		t.Fatalf("Canonical JSON mismatch for %s:\nGot:      %s\nExpected: %s",
+			vector.Name, string(canonicalBytes), vector.CanonicalJSON)
+	}
+
+	if vector.PrivateKey == "" {
+		t.Fatalf("Missing private key for deterministic vector %s", vector.Name)
+	}
+
+	kp, err := ImportKeypair(vector.PrivateKey, vector.PublicKey)
+	if err != nil {
+		t.Fatalf("Failed to import keypair for %s: %v", vector.Name, err)
+	}
+
+	signed, err := SignClaim(vector.Claim, kp)
+	if err != nil {
+		t.Fatalf("Failed to sign claim for %s: %v", vector.Name, err)
+	}
+
+	if signed.Signature != vector.ExpectedSig {
+		t.Fatalf("Signature mismatch for %s:\nGot:      %s\nExpected: %s",
+			vector.Name, signed.Signature, vector.ExpectedSig)
+	}
+
+	valid, err := VerifyClaim(&SignedClaim{
+		Claim:     *vector.Claim,
+		PublicKey: vector.PublicKey,
+		Signature: vector.ExpectedSig,
+	})
+	if err != nil {
+		t.Fatalf("Verification error for %s: %v", vector.Name, err)
+	}
+	if !valid {
+		t.Fatalf("Expected shared test vector %s to verify in Go", vector.Name)
+	}
+}
+
 // TestCrossSDKBasicClaim verifies Rust-generated basic claim in Go
 func TestCrossSDKBasicClaim(t *testing.T) {
 	vectors := loadTestVectors(t)
@@ -165,6 +214,29 @@ func TestCrossSDKMetadataClaim(t *testing.T) {
 		}
 
 		t.Log("✓ Cross-SDK metadata claim test passed!")
+	}
+}
+
+func TestCrossSDKEdgeCaseVectors(t *testing.T) {
+	vectors := loadTestVectors(t)
+	targets := map[string]bool{
+		"claim_html_chars":     true,
+		"claim_empty_metadata": true,
+		"claim_unicode":        true,
+	}
+
+	for _, vector := range vectors.Vectors {
+		if !targets[vector.Name] {
+			continue
+		}
+
+		t.Logf("Testing edge case vector: %s - %s", vector.Name, vector.Description)
+		verifyDeterministicVector(t, vector)
+		delete(targets, vector.Name)
+	}
+
+	for name := range targets {
+		t.Fatalf("Missing expected edge case vector: %s", name)
 	}
 }
 

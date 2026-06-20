@@ -1,6 +1,6 @@
 use pyo3::prelude::*;
 use pyo3::types::PyDict; 
-use provn_sdk_core::{Claim, SignedClaim};
+use provn_sdk_core::{Claim, SdkError, SignedClaim};
 use provn_sdk_core::generate_keypair as rs_generate_keypair;
 use provn_sdk_core::sign_claim as rs_sign_claim;
 use provn_sdk_core::verify_claim as rs_verify_claim;
@@ -29,17 +29,13 @@ fn generate_keypair() -> HashMap<String, String> {
 /// Returns dict representing the claim
 #[pyfunction]
 fn create_claim(data: String, timestamp: u64, metadata: Option<String>) -> PyResult<HashMap<String, PyObject>> {
-    let claim = Claim::new_with_timestamp(data, timestamp).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Validation Error: {}", e)))?;
-    
-    // Add metadata if present
-    let mut final_claim = claim;
-    final_claim.metadata = metadata;
+    let claim = Claim::new_with_timestamp(data, timestamp, metadata).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Validation Error: {}", e)))?;
 
     let mut map = HashMap::new();
     Python::with_gil(|py| {
-        map.insert("data".to_string(), final_claim.data.to_object(py));
-        map.insert("timestamp".to_string(), final_claim.timestamp.to_object(py));
-        if let Some(meta) = final_claim.metadata {
+        map.insert("data".to_string(), claim.data.to_object(py));
+        map.insert("timestamp".to_string(), claim.timestamp.to_object(py));
+        if let Some(meta) = claim.metadata {
             map.insert("metadata".to_string(), meta.to_object(py));
         }
     });
@@ -69,11 +65,8 @@ fn sign_claim(py: Python, claim_dict: &PyDict, private_key_hex: String) -> PyRes
         None
     };
 
-    let claim = Claim {
-        data,
-        timestamp,
-        metadata,
-    };
+    let claim = Claim::new_with_timestamp(data, timestamp, metadata)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Validation Error: {}", e)))?;
 
     // Decode Key
     let key_bytes = hex::decode(private_key_hex).map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid key hex: {}", e)))?;
@@ -88,11 +81,11 @@ fn sign_claim(py: Python, claim_dict: &PyDict, private_key_hex: String) -> PyRes
     
     // Convert Claim back to dict for return
     let mut claim_map = HashMap::new();
-    claim_map.insert("data".to_string(), signed.claim.data.to_object(py));
-    claim_map.insert("timestamp".to_string(), signed.claim.timestamp.to_object(py));
-    if let Some(meta) = signed.claim.metadata {
-        claim_map.insert("metadata".to_string(), meta.to_object(py));
-    }
+        claim_map.insert("data".to_string(), signed.claim.data.to_object(py));
+        claim_map.insert("timestamp".to_string(), signed.claim.timestamp.to_object(py));
+        if let Some(meta) = signed.claim.metadata {
+            claim_map.insert("metadata".to_string(), meta.to_object(py));
+        }
 
     result.insert("claim".to_string(), claim_map.to_object(py));
     result.insert("public_key".to_string(), signed.public_key.to_object(py));
@@ -103,7 +96,7 @@ fn sign_claim(py: Python, claim_dict: &PyDict, private_key_hex: String) -> PyRes
 
 /// Verify a signed claim
 #[pyfunction]
-fn verify_claim(py: Python, signed_claim_dict: &PyDict) -> PyResult<bool> {
+fn verify_claim(_py: Python, signed_claim_dict: &PyDict) -> PyResult<bool> {
     // Extract Public Key & Signature
     let pk_hex: String = signed_claim_dict.get_item("public_key")?.ok_or_else(|| pyo3::exceptions::PyValueError::new_err("Missing public_key"))?.extract()?;
     let sig_hex: String = signed_claim_dict.get_item("signature")?.ok_or_else(|| pyo3::exceptions::PyValueError::new_err("Missing signature"))?.extract()?;
@@ -140,14 +133,18 @@ fn verify_claim(py: Python, signed_claim_dict: &PyDict) -> PyResult<bool> {
 
     match rs_verify_claim(&signed_claim) {
         Ok(valid) => Ok(valid),
-        Err(_) => Ok(false),
+        Err(SdkError::SignatureError(_)) => Ok(false),
+        Err(e) => Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "Malformed signed_claim input: {}",
+            e
+        ))),
     }
 }
 
 /// Get SDK version
 #[pyfunction]
 fn get_version() -> String {
-    "0.2.0".to_string()
+    env!("CARGO_PKG_VERSION").to_string()
 }
 
 #[pymodule]

@@ -14,7 +14,7 @@ fn test_end_to_end_workflow() {
     // 2. Create claim
     let data = "test_data_for_integration";
     let hash = compute_hash(data.as_bytes());
-    let claim = Claim::new(hash.clone());
+    let claim = Claim::new(hash.clone(), None);
 
     // 3. Sign claim
     let signed = sign_claim(&claim, &keypair).expect("Signing should succeed");
@@ -32,7 +32,7 @@ fn test_end_to_end_workflow() {
 #[test]
 fn test_serialization_roundtrip() {
     let keypair = generate_keypair();
-    let claim = Claim::new("test_hash".to_string());
+    let claim = Claim::new("test_hash".to_string(), None);
     let signed = sign_claim(&claim, &keypair).unwrap();
 
     // Serialize to JSON
@@ -87,15 +87,15 @@ fn test_metadata_at_2kb_limit() {
     let keypair = generate_keypair();
 
     // Calculate exact size needed
-    let base_claim = Claim::new_with_timestamp("data".to_string(), 1234567890).unwrap();
+    // Calculate exact size needed
+    let base_claim = Claim::new_with_timestamp("data".to_string(), 1234567890, None).unwrap();
     let base_size = base_claim.to_signable_bytes().unwrap().len();
 
     // Metadata should be 2048 - base_size - 14 (overhead of `,"metadata":""`) to hit exactly 2KB
     let metadata_size = 2048 - base_size - 14;
     let metadata = "a".repeat(metadata_size);
 
-    let mut claim = Claim::new_with_timestamp("data".to_string(), 1234567890).unwrap();
-    claim.metadata = Some(metadata);
+    let claim = Claim::new_with_timestamp("data".to_string(), 1234567890, Some(metadata)).unwrap();
 
     // Should succeed at exactly 2KB
     let signed = sign_claim(&claim, &keypair).expect("Should sign at exactly 2KB");
@@ -107,8 +107,7 @@ fn test_metadata_at_2kb_limit() {
 fn test_metadata_exceeds_2kb_limit() {
     let keypair = generate_keypair();
 
-    let mut claim = Claim::new_with_timestamp("data".to_string(), 1234567890).unwrap();
-    claim.metadata = Some("a".repeat(3000)); // Way over limit
+    let claim = Claim::new_with_timestamp("data".to_string(), 1234567890, Some("a".repeat(3000))).unwrap();
 
     let result = sign_claim(&claim, &keypair);
     assert!(result.is_err());
@@ -118,7 +117,7 @@ fn test_metadata_exceeds_2kb_limit() {
 #[test]
 fn test_tamper_detection_integration() {
     let keypair = generate_keypair();
-    let claim = Claim::new("original_data".to_string());
+    let claim = Claim::new("original_data".to_string(), None);
     let mut signed = sign_claim(&claim, &keypair).unwrap();
 
     // Tamper with data
@@ -133,7 +132,7 @@ fn test_tamper_detection_integration() {
 #[test]
 fn test_signature_tamper_detection() {
     let keypair = generate_keypair();
-    let claim = Claim::new("data".to_string());
+    let claim = Claim::new("data".to_string(), None);
     let mut signed = sign_claim(&claim, &keypair).unwrap();
 
     // Tamper with signature (flip last char)
@@ -150,7 +149,7 @@ fn test_signature_tamper_detection() {
 #[test]
 fn test_invalid_public_key() {
     let keypair = generate_keypair();
-    let claim = Claim::new("data".to_string());
+    let claim = Claim::new("data".to_string(), None);
     let mut signed = sign_claim(&claim, &keypair).unwrap();
 
     // Invalid hex
@@ -166,7 +165,7 @@ fn test_wrong_public_key() {
     let keypair1 = generate_keypair();
     let keypair2 = generate_keypair();
 
-    let claim = Claim::new("data".to_string());
+    let claim = Claim::new("data".to_string(), None);
     let mut signed = sign_claim(&claim, &keypair1).unwrap();
 
     // Use different keypair's public key
@@ -183,7 +182,7 @@ fn test_multiple_claims_same_key() {
     let keypair = generate_keypair();
 
     for i in 0..10 {
-        let claim = Claim::new(format!("claim_{}", i));
+        let claim = Claim::new(format!("claim_{}", i), None);
         let signed = sign_claim(&claim, &keypair).unwrap();
         assert!(verify_claim(&signed).unwrap());
     }
@@ -194,7 +193,7 @@ fn test_multiple_claims_same_key() {
 fn test_different_keypairs() {
     for _ in 0..5 {
         let keypair = generate_keypair();
-        let claim = Claim::new("test".to_string());
+        let claim = Claim::new("test".to_string(), None);
         let signed = sign_claim(&claim, &keypair).unwrap();
         assert!(verify_claim(&signed).unwrap());
     }
@@ -204,7 +203,7 @@ fn test_different_keypairs() {
 #[test]
 fn test_unicode_data() {
     let keypair = generate_keypair();
-    let claim = Claim::new("Hello 世界 🌍".to_string());
+    let claim = Claim::new("Hello 世界 🌍".to_string(), None);
     let signed = sign_claim(&claim, &keypair).unwrap();
     assert!(verify_claim(&signed).unwrap());
 }
@@ -216,7 +215,7 @@ fn test_large_data_hash() {
 
     // Simulate a file hash (64 chars)
     let file_hash = "a".repeat(64);
-    let claim = Claim::new(file_hash);
+    let claim = Claim::new(file_hash, None);
     let signed = sign_claim(&claim, &keypair).unwrap();
     assert!(verify_claim(&signed).unwrap());
 }
@@ -225,7 +224,7 @@ fn test_large_data_hash() {
 #[test]
 fn test_claim_without_metadata() {
     let keypair = generate_keypair();
-    let claim = Claim::new("data_without_metadata".to_string());
+    let claim = Claim::new("data_without_metadata".to_string(), None);
 
     assert!(claim.metadata.is_none());
 
@@ -239,12 +238,12 @@ fn test_timestamp_boundaries() {
     let keypair = generate_keypair();
 
     // Unix epoch
-    let claim = Claim::new_with_timestamp("data".to_string(), 1).unwrap();
+    let claim = Claim::new_with_timestamp("data".to_string(), 1, None).unwrap();
     let signed = sign_claim(&claim, &keypair).unwrap();
     assert!(verify_claim(&signed).unwrap());
 
     // Future timestamp (should still work)
-    let claim = Claim::new_with_timestamp("data".to_string(), 4102444800).unwrap(); // Year 2100
+    let claim = Claim::new_with_timestamp("data".to_string(), 4102444800, None).unwrap(); // Year 2100
     let signed = sign_claim(&claim, &keypair).unwrap();
     assert!(verify_claim(&signed).unwrap());
 }

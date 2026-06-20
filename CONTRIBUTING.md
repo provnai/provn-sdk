@@ -1,72 +1,81 @@
 # Contributing to Provncloud SDK
 
-Thank you for your interest in contributing to the Provncloud SDK! We welcome contributions from the community to help make sovereign identity more accessible and robust.
+Thanks for contributing.
 
-## 🚀 Getting Started
+## Repository Layout
 
-1. **Fork the repository** on GitHub.
-2. **Clone your fork** locally:
-   ```bash
-   git clone https://github.com/your-username/provn-sdk.git
-   ```
-3. **Install Rust**: Ensure you have the latest stable version of Rust installed.
-4. **Run tests**:
-   ```bash
-   cargo test
-   ```
-
-
-## 🏗️ Monorepo Architecture
-
-This repository contains SDK implementations in multiple languages:
-
-```
+```text
 provn-sdk/
-├── spec/           # Shared specification (single source of truth)
-├── rust/           # Core Rust SDK (no-std compatible)
-├── rust-wasm/      # WebAssembly bindings
-├── typescript/     # TypeScript/Node.js SDK
-├── python/         # Python SDK (Native Rust extension via PyO3)
-├── go/             # Go SDK
-├── java/           # Java SDK
-└── examples/       # Usage examples for each language
+├── spec/         # Shared protocol spec and test vectors
+├── rust/         # Reference implementation
+├── rust-wasm/    # WASM bindings used by TypeScript
+├── typescript/   # TypeScript SDK
+├── python/       # Python SDK via PyO3
+├── go/           # Go SDK
+├── java/         # Java SDK
+├── examples/     # Language examples
+└── scripts/      # Monorepo tooling
 ```
 
-## 🛠️ Developer Management (`manage.py`)
+## Local Development
 
-We provide a unified script for building and testing the entire monorepo.
+Use the shared helper script from the repo root:
 
 ```bash
-# Build all SDKs
-python manage.py build
-
-# Run all tests
-python manage.py test
-
-# Clean artifacts
-python manage.py clean
+python scripts/build-all.py build
+python scripts/build-all.py test
+python scripts/build-all.py clean
 ```
 
-## 🧪 Testing
-
-We use standard `cargo test`. Please ensure all tests pass before submitting a Pull Request.
+Language-specific checks:
 
 ```bash
-# Test with standard library
-cargo test
-
-# Test no-std compatibility
+# Rust
+cd rust
+cargo test --all-features
 cargo check --no-default-features --features alloc
+
+# TypeScript
+cd typescript
+npm ci
+npm run build
+npm test -- --runInBand
+
+# Python
+cd python
+python -m pip install maturin pytest
+maturin develop --release
+pytest -v
+
+# Go
+cd go
+go test -v -race ./...
+go vet ./...
+
+# Java
+cd java
+mvn clean test
 ```
 
-## 📮 Pull Request Process
+## Cross-Language Checks
 
-1. Create a new branch for your feature or bugfix.
-2. Commit your changes with descriptive messages.
-3. Push to your fork and submit a Pull Request to the `main` branch.
-4. Ensure the CI pipeline passes.
+- Shared interoperability vectors live in `spec/test-vectors.json`.
+- If you change canonical serialization, signing, or verification behavior, update the relevant vectors and tests together.
+- Treat every committed key in the shared vectors as public test-only material.
 
-## ⚖️ License
+## OSS Hygiene
 
-By contributing, you agree that your contributions will be licensed under the **MIT License**.
+- Never commit production secrets, API keys, customer data, or private credentials.
+- Never commit built artifacts such as `.so`, `.pyd`, `.wasm`, `dist/`, `target/`, or cross-language scratch outputs.
+- Keep examples and docs free of proprietary or internal-only references.
 
+## Pull Requests
+
+1. Create a focused branch.
+2. Update code, tests, and public docs together.
+3. Make sure the relevant local checks pass.
+4. Open a PR against `main`.
+
+## License
+
+By contributing, you agree that your contributions are licensed under the MIT License.

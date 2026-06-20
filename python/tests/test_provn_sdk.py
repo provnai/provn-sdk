@@ -1,7 +1,7 @@
 import json
 import pytest
 import time
-from provn_sdk import ProvnSDK
+from provn_sdk import ProvnSDK, MalformedClaimError
 
 def test_generate_keypair():
     sdk = ProvnSDK()
@@ -51,8 +51,26 @@ def test_verify_invalid_signature():
     
     # Tamper with the public key
     signed["public_key"] = keys2["public_key"]
-    
     assert sdk1.verify_claim(signed) is False
+
+def test_verify_malformed_input_raises():
+    sdk = ProvnSDK()
+    
+    # Missing signature field
+    with pytest.raises(MalformedClaimError):
+        sdk.verify_claim({"claim": {"data": "x", "timestamp": 123}, "public_key": "aabb"})
+    
+    # Completely wrong type
+    with pytest.raises(MalformedClaimError):
+        sdk.verify_claim({"claim": None, "public_key": "aa", "signature": "bb"})
+
+    # Structurally present but malformed hex should also raise
+    with pytest.raises(MalformedClaimError):
+        sdk.verify_claim({
+            "claim": {"data": "x", "timestamp": 123},
+            "public_key": "not-hex",
+            "signature": "bb" * 64,
+        })
 
 def test_payload_size_limit():
     sdk = ProvnSDK()

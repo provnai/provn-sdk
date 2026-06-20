@@ -1,7 +1,7 @@
 package provnsdk
 
 import (
-	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -53,12 +53,32 @@ func TestCreateClaim(t *testing.T) {
 		t.Errorf("Expected data 'test_data', got '%s'", claim.Data)
 	}
 
-	if claim.Metadata != "test_metadata" {
-		t.Errorf("Expected metadata 'test_metadata', got '%s'", claim.Metadata)
+	if claim.Metadata == nil || *claim.Metadata != "test_metadata" {
+		t.Errorf("Expected metadata 'test_metadata', got '%v'", claim.Metadata)
 	}
 
 	if claim.Timestamp == 0 {
 		t.Error("Timestamp should not be 0")
+	}
+}
+
+func TestCreateClaimPreservesEmptyMetadata(t *testing.T) {
+	claim := CreateClaim("test_data", "")
+
+	if claim.Metadata == nil {
+		t.Fatal("Expected metadata pointer to be present for explicit empty string")
+	}
+
+	if *claim.Metadata != "" {
+		t.Errorf("Expected empty metadata string, got %q", *claim.Metadata)
+	}
+}
+
+func TestCreateClaimWithoutMetadata(t *testing.T) {
+	claim := CreateClaimWithoutMetadata("test_data")
+
+	if claim.Metadata != nil {
+		t.Errorf("Expected metadata to be omitted, got %v", claim.Metadata)
 	}
 }
 
@@ -68,7 +88,7 @@ func TestSignAndVerifyClaim(t *testing.T) {
 		t.Fatalf("Failed to generate keypair: %v", err)
 	}
 
-	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, nil)
 
 	signed, err := SignClaim(claim, kp)
 	if err != nil {
@@ -96,7 +116,7 @@ func TestSignAndVerifyClaim(t *testing.T) {
 
 func TestVerifyTamperedClaim(t *testing.T) {
 	kp, _ := GenerateKeypair()
-	claim, _ := CreateClaimWithTimestamp("original_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("original_data", 1234567890, nil)
 
 	signed, _ := SignClaim(claim, kp)
 
@@ -115,12 +135,17 @@ func TestVerifyTamperedClaim(t *testing.T) {
 
 func TestVerifyTamperedSignature(t *testing.T) {
 	kp, _ := GenerateKeypair()
-	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, nil)
 
 	signed, _ := SignClaim(claim, kp)
 
-	// Tamper with signature
-	signed.Signature = signed.Signature[:len(signed.Signature)-1] + "a"
+	// Tamper with signature by flipping the last character
+	lastChar := signed.Signature[len(signed.Signature)-1]
+	flipped := "a"
+	if lastChar == 'a' {
+		flipped = "b"
+	}
+	signed.Signature = signed.Signature[:len(signed.Signature)-1] + flipped
 
 	valid, err := VerifyClaim(signed)
 	if err != nil {
@@ -136,7 +161,7 @@ func TestVerifyWrongPublicKey(t *testing.T) {
 	kp1, _ := GenerateKeypair()
 	kp2, _ := GenerateKeypair()
 
-	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, "")
+	claim, _ := CreateClaimWithTimestamp("test_data", 1234567890, nil)
 	signed, _ := SignClaim(claim, kp1)
 
 	// Use different public key
@@ -153,20 +178,27 @@ func TestVerifyWrongPublicKey(t *testing.T) {
 }
 
 func TestCanonicalJSON(t *testing.T) {
+	meta := "meta"
 	claim1 := &Claim{
 		Data:      "test",
-		Metadata:  "meta",
+		Metadata:  &meta,
 		Timestamp: 123,
 	}
 
 	claim2 := &Claim{
 		Timestamp: 123,
 		Data:      "test",
-		Metadata:  "meta",
+		Metadata:  &meta,
 	}
 
-	json1, _ := json.Marshal(claim1)
-	json2, _ := json.Marshal(claim2)
+	json1, err := claim1.ToSignableBytes()
+	if err != nil {
+		t.Fatalf("Failed to serialize claim1: %v", err)
+	}
+	json2, err := claim2.ToSignableBytes()
+	if err != nil {
+		t.Fatalf("Failed to serialize claim2: %v", err)
+	}
 
 	if string(json1) != string(json2) {
 		t.Error("Canonical JSON should be deterministic")
@@ -182,12 +214,9 @@ func TestMetadataSizeLimit(t *testing.T) {
 	kp, _ := GenerateKeypair()
 
 	// Create claim with metadata exceeding 2KB
-	largeMetadata := make([]byte, 3000)
-	for i := range largeMetadata {
-		largeMetadata[i] = 'a'
-	}
+	largeStr := strings.Repeat("a", 3000)
 
-	claim, _ := CreateClaimWithTimestamp("data", 1234567890, string(largeMetadata))
+	claim, _ := CreateClaimWithTimestamp("data", 1234567890, &largeStr)
 
 	_, err := SignClaim(claim, kp)
 	if err == nil {
@@ -220,4 +249,19 @@ func TestGetVersion(t *testing.T) {
 	if version == "" {
 		t.Error("Version should not be empty")
 	}
+}
+
+func TestParseSignedClaimStrictRejectsUnknownFields(t *testing.T) {
+	// Valid claim JSON but with an injected extra field
+	maliciousJSON := `{
+		"claim": {"data": "test", "timestamp": 1234567890, "injected": "evil"},
+		"public_key": "aabbcc",
+		"signature": "ddeeff"
+	}`
+
+	_, err := ParseSignedClaimStrict(maliciousJSON)
+	if err == nil {
+		t.Error("Expected error for unknown field 'injected', got nil")
+	}
+	t.Logf("Correctly rejected: %v", err)
 }

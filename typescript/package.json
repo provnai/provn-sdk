@@ -1,18 +1,27 @@
 {
   "name": "@provncloud/sdk",
-  "version": "0.3.0",
+  "version": "0.3.3",
   "description": "Provncloud SDK for TypeScript - Privacy-preserving digital signatures",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "homepage": "https://github.com/provnai/provn-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/provnai/provn-sdk/issues"
+  },
   "files": [
     "dist/",
-    "wasm/"
+    "wasm/package.json",
+    "wasm/provn_sdk_wasm.js",
+    "wasm/provn_sdk_wasm.d.ts",
+    "wasm/provn_sdk_wasm_bg.wasm",
+    "wasm/provn_sdk_wasm_bg.wasm.d.ts"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "lint": "eslint src/ --ext .ts",
-    "clean": "rm -rf dist/"
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "keywords": [
     "cryptography",
@@ -27,6 +36,9 @@
     "type": "git",
     "url": "git+https://github.com/provnai/provn-sdk.git",
     "directory": "typescript"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

@@ -31,7 +31,7 @@ func main() {
 	fmt.Printf("[2] Prepared Claim (Asset Hash): \"%s\"\n", assetHash)
 
 	// Create claim with current timestamp
-	claim := provnsdk.CreateClaim(assetHash, "")
+	claim := provnsdk.CreateClaimWithoutMetadata(assetHash)
 	fmt.Printf("    Timestamp: %d\n", claim.Timestamp)
 
 	// 3. SECURE SIGNING: Sign the claim locally

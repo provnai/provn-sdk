@@ -59,9 +59,16 @@ public class ProvnSDKTest {
         ProvnSDK.Claim claim = ProvnSDK.createClaimWithTimestamp("original_data", 1234567890L, null);
         
         ProvnSDK.SignedClaim signed = ProvnSDK.signClaim(claim, kp);
-        signed.claim.data = "tampered_data";
         
-        boolean valid = ProvnSDK.verifyClaim(signed);
+        // Simulate tampering by wrapping in a new SignedClaim with different data
+        ProvnSDK.Claim tamperedClaim = new ProvnSDK.Claim("tampered_data", 1234567890L, null);
+        ProvnSDK.SignedClaim tamperedSigned = new ProvnSDK.SignedClaim(
+            tamperedClaim,
+            signed.publicKey,
+            signed.signature
+        );
+        
+        boolean valid = ProvnSDK.verifyClaim(tamperedSigned);
         assertFalse(valid);
     }
     
@@ -85,5 +92,17 @@ public class ProvnSDKTest {
         String version = ProvnSDK.getVersion();
         assertNotNull(version);
         assertFalse(version.isEmpty());
+    }
+
+    @Test
+    public void testRejectUnknownFieldsDuringDeserialization() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper testMapper = new com.fasterxml.jackson.databind.ObjectMapper()
+            .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        
+        String maliciousJson = "{\"data\":\"test\",\"timestamp\":123,\"injected\":\"evil\"}";
+        
+        assertThrows(com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException.class, () -> {
+            testMapper.readValue(maliciousJson, ProvnSDK.Claim.class);
+        });
     }
 }

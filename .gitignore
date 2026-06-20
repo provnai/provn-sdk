@@ -19,6 +19,12 @@
 **/venv/
 **/*.egg-info/
 
+# Compiled Python native extensions (PyO3/Maturin build outputs)
+**/*.so
+**/*.pyd
+python/src/provn_sdk/provn_sdk*.so
+python/src/provn_sdk/provn_sdk*.pyd
+
 # Java
 **/target/
 **/.classpath
@@ -61,5 +67,10 @@ typescript/dist/
 
 # WASM binaries (build artifacts)
 **/*.wasm
-python/src/provn_sdk/*.wasm
 typescript/wasm/
+
+# Cross-language test artifacts
+cross_lang_claim.json
+
+# CI-generated build artifacts that should never be committed
+rust-wasm/pkg/

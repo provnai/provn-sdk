@@ -5,7 +5,6 @@ A privacy-preserving digital signature SDK for anchoring data to
 Arweave AO and Solana blockchains.
 """
 
-import json
 from typing import Optional, Dict
 
 # Import the PyO3 compiled native extension
@@ -17,6 +16,17 @@ from .provn_sdk import (
     verify_claim as _verify_claim,
     get_version as _get_version,
 )
+
+class MalformedClaimError(ValueError):
+    """
+    Raised when the signed_claim dict is structurally invalid
+    (e.g., missing keys, bad hex encoding, wrong types).
+    
+    Distinct from a cryptographic verification failure, which returns False.
+    """
+    pass
+
+__all__ = ["ProvnSDK", "MalformedClaimError"]
 
 class ProvnSDK:
     """Provncloud SDK for Python"""
@@ -48,12 +58,26 @@ class ProvnSDK:
         return _sign_claim(claim, private_key_hex)
 
     def verify_claim(self, signed_claim: Dict) -> bool:
-        """Verify a signed claim"""
+        """
+        Verify a signed claim.
+        
+        Returns:
+            True if the signature is cryptographically valid.
+            False if the signature does not match the claim.
+        
+        Raises:
+            MalformedClaimError: If the input is structurally invalid
+                (missing required fields, bad hex, wrong types).
+                This is NOT the same as a failed signature check.
+        """
         try:
             return _verify_claim(signed_claim)
-        except ValueError:
-            # Re-raise standard value errors for structural mismatches
-            return False
+        except (ValueError, TypeError, KeyError) as e:
+            raise MalformedClaimError(
+                f"Malformed signed_claim input: {e}. "
+                "Ensure the dict has 'claim' (with 'data' and 'timestamp'), "
+                "'public_key' (64-char hex), and 'signature' (128-char hex)."
+            ) from e
 
     def get_version(self) -> str:
         """Get SDK version"""

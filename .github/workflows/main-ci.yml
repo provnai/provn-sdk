@@ -26,11 +26,163 @@ jobs:
               - 'rust/**'
             typescript:
               - 'typescript/**'
+              - 'rust-wasm/**'
             python:
               - 'python/**'
+              - 'rust/**'
             go:
               - 'go/**'
             java:
               - 'java/**'
             spec:
               - 'spec/**'
+
+  rust:
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Test
+        run: cargo test --all-features --verbose
+      - name: no_std check
+        run: cargo check --no-default-features --features alloc --verbose
+      - name: Format
+        run: cargo fmt -- --check
+      - name: Clippy
+        run: cargo clippy --all-features -- -D warnings
+
+  typescript:
+    needs: changes
+    if: needs.changes.outputs.typescript == 'true' || needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: typescript/package-lock.json
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Build WASM package
+        working-directory: ./rust-wasm
+        run: wasm-pack build --target bundler
+      - name: Copy WASM artifacts
+        run: |
+          mkdir -p typescript/wasm
+          cp rust-wasm/pkg/* typescript/wasm/
+      - name: Install dependencies
+        working-directory: ./typescript
+        run: npm ci
+      - name: Build
+        working-directory: ./typescript
+        run: npm run build
+      - name: Test
+        working-directory: ./typescript
+        run: npm test -- --runInBand
+      - name: Lint
+        working-directory: ./typescript
+        run: npm run lint
+
+  python:
+    needs: changes
+    if: needs.changes.outputs.python == 'true' || needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./python
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest maturin
+      - name: Build and install package
+        run: maturin develop --release
+      - name: Run tests
+        run: pytest -v
+
+  go:
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Download dependencies
+        run: go mod download
+      - name: Test
+        run: go test -v -race ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Build
+        run: go build ./...
+      - name: Format
+        run: |
+          if [ -n "$(gofmt -d .)" ]; then
+            gofmt -d .
+            exit 1
+          fi
+
+  java:
+    needs: changes
+    if: needs.changes.outputs.java == 'true' || needs.changes.outputs.spec == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Test
+        run: mvn -B clean test
+      - name: Package
+        run: mvn -B package -DskipTests
+
+  interop:
+    needs: changes
+    if: needs.changes.outputs.spec == 'true' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.go == 'true' || needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Rust integration tests
+        working-directory: ./rust
+        run: cargo test --all-features
+      - name: Go cross-SDK tests
+        working-directory: ./go
+        run: go test -run 'TestCrossSDK|TestCanonicalJSON' -v ./...
+      - name: Python package tests
+        working-directory: ./python
+        run: |
+          python -m pip install --upgrade pip pytest maturin
+          maturin develop --release
+          pytest -v

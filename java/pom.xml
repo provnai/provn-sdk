@@ -7,12 +7,27 @@
 
     <groupId>com.provn</groupId>
     <artifactId>provn-sdk</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.3</version>
     <packaging>jar</packaging>
 
     <name>Provncloud SDK</name>
     <description>Privacy-preserving digital signature SDK for Java</description>
     <url>https://github.com/provnai/provn-sdk</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/provnai/provn-sdk</url>
+        <connection>scm:git:https://github.com/provnai/provn-sdk.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/provnai/provn-sdk.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>

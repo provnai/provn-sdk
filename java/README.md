@@ -2,65 +2,54 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 
-**Official Java SDK for privacy-preserving digital signatures and data anchoring.**
+Java implementation of the Provncloud claim signing format using Jackson and Bouncy Castle.
 
-Provncloud SDK allows you to cryptographically sign data and anchor it to blockchain networks like Arweave AO and Solana without revealing the raw content.
+## Installation
 
-## 🚀 Installation
+Build locally:
 
-### Maven
-For now, you can install the SDK locally using:
 ```bash
-mvn install
+mvn clean install
 ```
 
-Then add to your `pom.xml`:
+Dependency:
+
 ```xml
 <dependency>
     <groupId>com.provn</groupId>
     <artifactId>provn-sdk</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.3</version>
 </dependency>
 ```
 
-## 💻 Usage
+## Usage
 
 ```java
 import com.provn.sdk.ProvnSDK;
-import java.time.Instant;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        ProvnSDK sdk = new ProvnSDK();
+        ProvnSDK.KeyPair keys = ProvnSDK.generateKeypair();
+        ProvnSDK.Claim claim =
+            ProvnSDK.createClaimWithTimestamp("Sensitive User Data", 1704067200L, null);
+        ProvnSDK.SignedClaim signed = ProvnSDK.signClaim(claim, keys);
 
-        // 1. Generate a new Ed25519 keypair
-        ProvnSDK.KeyPair keys = sdk.generateKeyPair();
-
-        // 2. Create a claim
-        long timestamp = Instant.now().getEpochSecond();
-        ProvnSDK.Claim claim = sdk.createClaimWithTimestamp("Sensitive User Data", timestamp, "{\"context\":\"test\"}");
-
-        // 3. Sign the claim
-        ProvnSDK.SignedClaim signed = sdk.signClaim(claim, keys.privateKey);
-
-        // 4. Verify (Offline)
-        boolean isValid = sdk.verifyClaim(signed);
-        System.out.println("Signature valid: " + isValid);
+        System.out.println(ProvnSDK.verifyClaim(signed));
     }
 }
 ```
 
-## 🛠 Features
+## Notes
 
-- **Security Focus**: Built on Bouncy Castle for robust Ed25519 implementation.
-- **Schema Alignment**: Explicitly configured for `snake_case` JSON fields to ensure cross-language interoperability via JCS (RFC 8785).
-- **Validation**: Strict enforcement of 2KB payload limits.
+- Jackson is configured for `snake_case`, ordered claim properties, and strict unknown-field rejection.
+- `Claim` and `SignedClaim` are immutable value objects.
+- Canonical payload size is limited to 2 KB.
 
-## 📚 Resources
+## Resources
 
-- [**Monorepo & Examples**](https://github.com/provnai/provn-sdk)
-- [**Protocol Spec**](https://github.com/provnai/provn-sdk/blob/main/spec/SPEC.md)
+- [Monorepo](https://github.com/provnai/provn-sdk)
+- [Protocol Spec](https://github.com/provnai/provn-sdk/blob/main/spec/SPEC.md)
 
-## ⚖️ License
+## License
 
-MIT License. See [LICENSE](https://github.com/provnai/provn-sdk/blob/main/LICENSE) for details.
+MIT
